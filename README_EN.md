@@ -113,3 +113,9 @@ npm run build
 - If no sheet name is specified, the first sheet will be the target
 - Range specification should be in formats like "A1:C10"
 - Specifying an existing file path in create_excel will result in an error
+
+## Author
+Author: virtuarian
+
+## License
+This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
