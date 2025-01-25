@@ -128,6 +128,14 @@ class ExcelServer {
     });
   }
 
+  /**
+   * Reads data from an Excel file
+   * @param args - Object containing:
+   *   - filePath: string - Path to the Excel file
+   *   - sheetName?: string - Name of the sheet to read (default: first sheet)
+   *   - range?: string - Range to read (e.g., "A1:C10")
+   * @returns Object containing the read data in JSON format
+   */
   private async handleReadExcel(args: any) {
     console.error('handleReadExcel started...'); // Added: handleReadExcel start log
     const { filePath, sheetName, range } = args;
@@ -185,6 +193,13 @@ class ExcelServer {
     };
   }
 
+  /**
+   * Creates a new sheet in an existing Excel file
+   * @param args - Object containing:
+   *   - filePath: string - Path to the Excel file
+   *   - sheetName: string - Name of the new sheet
+   * @returns Object with success message
+   */
   private async handleCreateSheet(args: any) {
     console.error('handleCreateSheet started...'); // Added: handleCreateSheet start log
     const { filePath, sheetName } = args;
@@ -205,6 +220,13 @@ class ExcelServer {
     };
   }
 
+  /**
+   * Creates a new Excel file
+   * @param args - Object containing:
+   *   - filePath: string - Path to create the new Excel file
+   *   - sheetName?: string - Name of the sheet (default: "Sheet1")
+   * @returns Object with success message
+   */
   private async handleCreateExcel(args: any) {
     console.error('handleCreateExcel started...');
     const { filePath, sheetName = 'Sheet1' } = args;
@@ -229,6 +251,12 @@ class ExcelServer {
     };
   }
 
+  /**
+   * Loads an Excel workbook from file
+   * @param filePath - Path to the Excel file
+   * @returns Promise resolving to the loaded workbook
+   * @throws McpError if file not found
+   */
   private async loadWorkbook(filePath: string): Promise<ExcelJS.Workbook> {
     console.error('loadWorkbook started...', filePath); 
     if (this.workbookCache.has(filePath)) {
@@ -248,9 +276,53 @@ class ExcelServer {
     return workbook;
   }
 
+  /**
+   * Parses Excel range string into numeric coordinates
+   * @param range - Excel range string (e.g., "A1:C10")
+   * @returns Array containing [startCol, startRow, endCol, endRow]
+   * @throws McpError if range format is invalid
+   */
   private parseRange(range: string): [number, number, number, number] {
-    // Implement range parsing logic
-    return [1, 1, 10, 10]; // Placeholder
+    const rangeParts = range.split(':');
+    if (rangeParts.length !== 2) {
+      throw new McpError(ErrorCode.InvalidParams, 'Invalid range format. Expected format like "A1:C10"');
+    }
+
+    const [startCell, endCell] = rangeParts;
+
+    // Get start cell column and row
+    const startColMatch = startCell.match(/[A-Za-z]+/);
+    const startRowMatch = startCell.match(/\d+/);
+    if (!startColMatch || !startRowMatch) {
+      throw new McpError(ErrorCode.InvalidParams, 'Invalid start cell format');
+    }
+    const startCol = this.columnLetterToNumber(startColMatch[0]);
+    const startRow = parseInt(startRowMatch[0], 10);
+
+    // Get end cell column and row
+    const endColMatch = endCell.match(/[A-Za-z]+/);
+    const endRowMatch = endCell.match(/\d+/);
+    if (!endColMatch || !endRowMatch) {
+      throw new McpError(ErrorCode.InvalidParams, 'Invalid end cell format');
+    }
+    const endCol = this.columnLetterToNumber(endColMatch[0]);
+    const endRow = parseInt(endRowMatch[0], 10);
+
+    return [startCol, startRow, endCol, endRow];
+  }
+
+  /**
+   * Converts Excel column letters to numeric index
+   * @param letters - Column letters (e.g., "A", "B", "AA")
+   * @returns Numeric column index (1-based)
+   */
+  private columnLetterToNumber(letters: string): number {
+    let column = 0;
+    letters = letters.toUpperCase();
+    for (let i = 0; i < letters.length; i++) {
+      column = column * 26 + (letters.charCodeAt(i) - 64);
+    }
+    return column;
   }
 
   async run() {
