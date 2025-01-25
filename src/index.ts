@@ -20,7 +20,6 @@ class ExcelServer {
   private workbookCache: Map<string, ExcelJS.Workbook> = new Map();
 
   constructor() {
-    console.error('Starting Excel MCP server...'); // Added: Startup log output
     this.server = new Server(
       {
         name: 'excel-server',
@@ -97,24 +96,16 @@ class ExcelServer {
       try {
         switch (request.params.name) {
           case 'read_excel':
-            console.error('Handling read_excel tool...'); // Added: Tool handler start log
             const readExcelResult = await this.handleReadExcel(request.params.arguments);
-            console.error('read_excel tool handled.'); // Added: Tool handler end log
             return readExcelResult;
           case 'write_excel':
-            console.error('Handling write_excel tool...'); // Added: Tool handler start log
             const writeExcelResult = await this.handleWriteExcel(request.params.arguments);
-            console.error('write_excel tool handled.'); // Added: Tool handler end log
             return writeExcelResult;
           case 'create_sheet':
-            console.error('Handling create_sheet tool...'); // Added: Tool handler start log
             const createSheetResult = await this.handleCreateSheet(request.params.arguments);
-            console.error('create_sheet tool handled.'); // Added: Tool handler end log
             return createSheetResult;
           case 'create_excel':
-            console.error('Handling create_excel tool...');
             const createExcelResult = await this.handleCreateExcel(request.params.arguments);
-            console.error('create_excel tool handled.');
             return createExcelResult;
           default:
             throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${request.params.name}`);
@@ -137,7 +128,6 @@ class ExcelServer {
    * @returns Object containing the read data in JSON format
    */
   private async handleReadExcel(args: any) {
-    console.error('handleReadExcel started...'); // Added: handleReadExcel start log
     const { filePath, sheetName, range } = args;
     const workbook = await this.loadWorkbook(filePath);
     const worksheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0];
@@ -157,7 +147,6 @@ class ExcelServer {
       }
       data.push(rowData);
     }
-    console.error('handleReadExcel finished.'); // Added: handleReadExcel end log
 
     return {
       content: [{
@@ -168,7 +157,6 @@ class ExcelServer {
   }
 
   private async handleWriteExcel(args: any) {
-    console.error('handleWriteExcel started...'); // Added: handleWriteExcel start log
     const { filePath, sheetName, data } = args;
     const workbook = await this.loadWorkbook(filePath);
     const worksheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0];
@@ -184,7 +172,6 @@ class ExcelServer {
     }
 
     await workbook.xlsx.writeFile(filePath);
-    console.error('handleWriteExcel finished.');
     return {
       content: [{
         type: 'text',
@@ -201,7 +188,6 @@ class ExcelServer {
    * @returns Object with success message
    */
   private async handleCreateSheet(args: any) {
-    console.error('handleCreateSheet started...'); // Added: handleCreateSheet start log
     const { filePath, sheetName } = args;
     const workbook = await this.loadWorkbook(filePath);
     
@@ -211,7 +197,6 @@ class ExcelServer {
 
     workbook.addWorksheet(sheetName);
     await workbook.xlsx.writeFile(filePath);
-    console.error('handleCreateSheet finished.'); // Added: handleCreateSheet end log
     return {
       content: [{
         type: 'text',
@@ -228,7 +213,6 @@ class ExcelServer {
    * @returns Object with success message
    */
   private async handleCreateExcel(args: any) {
-    console.error('handleCreateExcel started...');
     const { filePath, sheetName = 'Sheet1' } = args;
 
     if (fs.existsSync(filePath)) {
@@ -242,7 +226,6 @@ class ExcelServer {
     // Add to cache
     this.workbookCache.set(filePath, workbook);
     
-    console.error('handleCreateExcel finished.');
     return {
       content: [{
         type: 'text',
@@ -258,21 +241,17 @@ class ExcelServer {
    * @throws McpError if file not found
    */
   private async loadWorkbook(filePath: string): Promise<ExcelJS.Workbook> {
-    console.error('loadWorkbook started...', filePath); 
     if (this.workbookCache.has(filePath)) {
-      console.error('loadWorkbook finished - cache hit.', filePath); 
       return this.workbookCache.get(filePath)!;
     }
 
     if (!fs.existsSync(filePath)) {
-      console.error('loadWorkbook finished - file not found.', filePath); 
       throw new McpError(ErrorCode.InvalidParams, `File ${filePath} not found`);
     }
 
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(filePath);
     this.workbookCache.set(filePath, workbook);
-    console.error('loadWorkbook finished - file read.', filePath); 
     return workbook;
   }
 
@@ -328,8 +307,6 @@ class ExcelServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('Transport connected.'); 
-    console.error('Excel MCP server running on stdio');
   }
 }
 
