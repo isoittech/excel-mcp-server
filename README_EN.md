@@ -4,9 +4,17 @@ This server provides MCP tools for manipulating local EXCEL files.
 
 ## Table of Contents
 
-1. [Installation](#installation)
-2. [Usage](#usage)
-3. [Notes](#notes)
+1. [System Requirements](#system-requirements)
+2. [Installation](#installation)
+3. [Usage](#usage)
+4. [Notes](#notes)
+
+## System Requirements
+
+- Node.js: 18.x or higher
+- npm: 9.x or higher
+- Excel file format: .xlsx
+- Supported OS: Windows 10/11, macOS 12+, Linux (Ubuntu 20.04+)
 
 ## Installation
 
