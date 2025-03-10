@@ -1,11 +1,11 @@
 /**
- * Excel MCPサーバーの型定義
+ * Type definitions for Excel MCP server
  */
 
 import ExcelJS from 'exceljs';
 
 /**
- * ツールの引数の型定義
+ * Type definitions for tool arguments
  */
 export interface ReadExcelArgs {
   filePath: string;
@@ -149,7 +149,7 @@ export interface CreatePivotTableArgs {
 }
 
 /**
- * ツールの戻り値の型定義
+ * Type definitions for tool responses
  */
 export interface ToolResponse {
   content: {
@@ -160,7 +160,7 @@ export interface ToolResponse {
 }
 
 /**
- * セル座標の型定義
+ * Type definition for cell coordinates
  */
 export interface CellCoordinate {
   row: number;
@@ -168,7 +168,7 @@ export interface CellCoordinate {
 }
 
 /**
- * セル範囲の型定義
+ * Type definition for cell range
  */
 export interface CellRange {
   startCol: number;
@@ -178,7 +178,7 @@ export interface CellRange {
 }
 
 /**
- * ワークブックキャッシュの型定義
+ * Type definition for workbook cache
  */
 export interface WorkbookCache {
   [filePath: string]: ExcelJS.Workbook;

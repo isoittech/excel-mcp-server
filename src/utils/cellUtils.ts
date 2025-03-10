@@ -1,21 +1,21 @@
 /**
- * セル操作ユーティリティ関数
+ * Cell operation utility functions
  */
 
 import { CellCoordinate, CellRange } from '../types/index.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 
 /**
- * セル参照（例：A1）を行と列の数値に変換
- * @param cellRef - セル参照（例：A1）
- * @returns 行と列の数値
+ * Convert cell reference (e.g., A1) to row and column numbers
+ * @param cellRef - Cell reference (e.g., A1)
+ * @returns Row and column numbers
  */
 export function cellRefToCoordinate(cellRef: string): CellCoordinate {
   const colMatch = cellRef.match(/[A-Za-z]+/);
   const rowMatch = cellRef.match(/\d+/);
   
   if (!colMatch || !rowMatch) {
-    throw new McpError(ErrorCode.InvalidParams, `無効なセル参照形式: ${cellRef}`);
+    throw new McpError(ErrorCode.InvalidParams, `Invalid cell reference format: ${cellRef}`);
   }
   
   const col = columnLetterToNumber(colMatch[0]);
@@ -25,9 +25,9 @@ export function cellRefToCoordinate(cellRef: string): CellCoordinate {
 }
 
 /**
- * 列の文字（例：A, B, AA）を数値に変換
- * @param letters - 列の文字（例：A, B, AA）
- * @returns 数値（1から始まる）
+ * Convert column letters (e.g., A, B, AA) to number
+ * @param letters - Column letters (e.g., A, B, AA)
+ * @returns Number (starting from 1)
  */
 export function columnLetterToNumber(letters: string): number {
   let column = 0;
@@ -39,9 +39,9 @@ export function columnLetterToNumber(letters: string): number {
 }
 
 /**
- * 数値を列の文字（例：A, B, AA）に変換
- * @param num - 数値（1から始まる）
- * @returns 列の文字
+ * Convert number to column letters (e.g., A, B, AA)
+ * @param num - Number (starting from 1)
+ * @returns Column letters
  */
 export function numberToColumnLetter(num: number): string {
   let letter = '';
@@ -54,24 +54,24 @@ export function numberToColumnLetter(num: number): string {
 }
 
 /**
- * 座標をセル参照（例：A1）に変換
- * @param row - 行番号（1から始まる）
- * @param col - 列番号（1から始まる）
- * @returns セル参照
+ * Convert coordinates to cell reference (e.g., A1)
+ * @param row - Row number (starting from 1)
+ * @param col - Column number (starting from 1)
+ * @returns Cell reference
  */
 export function coordinateToCellRef(row: number, col: number): string {
   return `${numberToColumnLetter(col)}${row}`;
 }
 
 /**
- * 範囲文字列（例：A1:C10）を解析して座標に変換
- * @param range - 範囲文字列（例：A1:C10）
- * @returns 範囲の座標
+ * Parse range string (e.g., A1:C10) and convert to coordinates
+ * @param range - Range string (e.g., A1:C10)
+ * @returns Range coordinates
  */
 export function parseRange(range: string): CellRange {
   const rangeParts = range.split(':');
   if (rangeParts.length !== 2) {
-    throw new McpError(ErrorCode.InvalidParams, '無効な範囲形式。"A1:C10"のような形式が必要です');
+    throw new McpError(ErrorCode.InvalidParams, 'Invalid range format. Format like "A1:C10" is required');
   }
 
   const [startCell, endCell] = rangeParts;
@@ -87,9 +87,9 @@ export function parseRange(range: string): CellRange {
 }
 
 /**
- * 単一セルの場合も範囲として解析（例：A1 → A1:A1）
- * @param cellOrRange - セル参照または範囲文字列
- * @returns 範囲の座標
+ * Parse cell or range (e.g., A1 → A1:A1)
+ * @param cellOrRange - Cell reference or range string
+ * @returns Range coordinates
  */
 export function parseCellOrRange(cellOrRange: string): CellRange {
   if (cellOrRange.includes(':')) {
@@ -106,9 +106,9 @@ export function parseCellOrRange(cellOrRange: string): CellRange {
 }
 
 /**
- * 範囲の座標を範囲文字列に変換
- * @param range - 範囲の座標
- * @returns 範囲文字列（例：A1:C10）
+ * Convert range coordinates to range string
+ * @param range - Range coordinates
+ * @returns Range string (e.g., A1:C10)
  */
 export function formatRange(range: CellRange): string {
   const startCell = coordinateToCellRef(range.startRow, range.startCol);
@@ -117,9 +117,9 @@ export function formatRange(range: CellRange): string {
 }
 
 /**
- * 範囲が有効かどうかを検証
- * @param range - 範囲の座標
- * @returns 有効な場合はtrue、無効な場合はfalse
+ * Validate if range is valid
+ * @param range - Range coordinates
+ * @returns true if valid, false if invalid
  */
 export function isValidRange(range: CellRange): boolean {
   return (

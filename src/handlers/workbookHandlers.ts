@@ -1,5 +1,5 @@
 /**
- * ワークブック操作ハンドラー
+ * Workbook operation handlers
  */
 
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
@@ -16,38 +16,38 @@ import {
 import { loadWorkbook, getExcelPath, ensureDirectoryExists } from '../utils/fileUtils.js';
 
 /**
- * 新規Excelファイルを作成
- * @param args - 引数
- * @param workbookCache - ワークブックキャッシュ
- * @returns ツールレスポンス
+ * Create new Excel file
+ * @param args - Arguments
+ * @param workbookCache - Workbook cache
+ * @returns Tool response
  */
 export async function handleCreateExcel(args: CreateExcelArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
     const { filePath, sheetName = 'Sheet1' } = args;
     const fullPath = getExcelPath(filePath);
     
-    // ファイルが既に存在する場合はエラー
+    // Error if file already exists
     if (fs.existsSync(fullPath)) {
-      throw new McpError(ErrorCode.InvalidParams, `ファイル ${filePath} は既に存在します`);
+      throw new McpError(ErrorCode.InvalidParams, `File ${filePath} already exists`);
     }
     
-    // ディレクトリが存在しない場合は作成
+    // Create directory if it doesn't exist
     ensureDirectoryExists(fullPath);
     
-    // 新規ワークブックを作成
+    // Create new workbook
     const workbook = new ExcelJS.Workbook();
     workbook.addWorksheet(sheetName);
     
-    // ファイルを保存
+    // Save file
     await workbook.xlsx.writeFile(fullPath);
     
-    // キャッシュに追加
+    // Add to cache
     workbookCache[fullPath] = workbook;
     
     return {
       content: [{
         type: 'text',
-        text: `Excelファイルが ${fullPath} に正常に作成されました`
+        text: `Excel file successfully created at ${fullPath}`
       }]
     };
   } catch (error) {
@@ -56,16 +56,16 @@ export async function handleCreateExcel(args: CreateExcelArgs, workbookCache: Wo
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `Excelファイル作成エラー: ${error.message}` : 'Excelファイル作成中に不明なエラーが発生しました'
+      error instanceof Error ? `Excel file creation error: ${error.message}` : 'Unknown error occurred while creating Excel file'
     );
   }
 }
 
 /**
- * 新規シートを作成
- * @param args - 引数
- * @param workbookCache - ワークブックキャッシュ
- * @returns ツールレスポンス
+ * Create new worksheet
+ * @param args - Arguments
+ * @param workbookCache - Workbook cache
+ * @returns Tool response
  */
 export async function handleCreateSheet(args: CreateSheetArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
@@ -73,21 +73,21 @@ export async function handleCreateSheet(args: CreateSheetArgs, workbookCache: Wo
     const fullPath = getExcelPath(filePath);
     const workbook = await loadWorkbook(fullPath, workbookCache);
     
-    // 同名のシートが既に存在する場合はエラー
+    // Error if sheet with same name already exists
     if (workbook.getWorksheet(sheetName)) {
-      throw new McpError(ErrorCode.InvalidParams, `シート ${sheetName} は既に存在します`);
+      throw new McpError(ErrorCode.InvalidParams, `Sheet ${sheetName} already exists`);
     }
     
-    // 新規シートを作成
+    // Create new sheet
     workbook.addWorksheet(sheetName);
     
-    // ファイルを保存
+    // Save file
     await workbook.xlsx.writeFile(fullPath);
     
     return {
       content: [{
         type: 'text',
-        text: `シート ${sheetName} が正常に作成されました`
+        text: `Sheet ${sheetName} successfully created`
       }]
     };
   } catch (error) {
@@ -96,16 +96,16 @@ export async function handleCreateSheet(args: CreateSheetArgs, workbookCache: Wo
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `シート作成エラー: ${error.message}` : 'シート作成中に不明なエラーが発生しました'
+      error instanceof Error ? `Sheet creation error: ${error.message}` : 'Unknown error occurred while creating sheet'
     );
   }
 }
 
 /**
- * ワークブックのメタデータを取得
- * @param args - 引数
- * @param workbookCache - ワークブックキャッシュ
- * @returns ツールレスポンス
+ * Get workbook metadata
+ * @param args - Arguments
+ * @param workbookCache - Workbook cache
+ * @returns Tool response
  */
 export async function handleGetWorkbookMetadata(args: GetWorkbookMetadataArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
@@ -119,7 +119,7 @@ export async function handleGetWorkbookMetadata(args: GetWorkbookMetadataArgs, w
       sheets: []
     };
     
-    // 各ワークシートの情報を取得
+    // Get information for each worksheet
     workbook.eachSheet((worksheet, sheetId) => {
       const sheetInfo: any = {
         name: worksheet.name,
@@ -129,9 +129,9 @@ export async function handleGetWorkbookMetadata(args: GetWorkbookMetadataArgs, w
         hidden: worksheet.state === 'hidden' || worksheet.state === 'veryHidden'
       };
       
-      // 使用範囲の情報を含める場合
+      // Include used range information if requested
       if (includeRanges) {
-        // 使用範囲を取得（内容のある最後のセルを探す）
+        // Find the last cell with content (to determine used range)
         let maxRow = 0;
         let maxCol = 0;
         
@@ -167,7 +167,7 @@ export async function handleGetWorkbookMetadata(args: GetWorkbookMetadataArgs, w
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `メタデータ取得エラー: ${error.message}` : 'メタデータ取得中に不明なエラーが発生しました'
+      error instanceof Error ? `Metadata retrieval error: ${error.message}` : 'Unknown error occurred while retrieving metadata'
     );
   }
 }

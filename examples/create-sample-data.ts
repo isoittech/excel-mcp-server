@@ -1,35 +1,35 @@
 /**
- * サンプルデータを含むExcelファイルを作成するスクリプト
+ * Script to create Excel file with sample data
  */
 
 import ExcelJS from 'exceljs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-// ESモジュールで__dirnameを使用するための設定
+// Configuration to use __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * サンプルデータを含むExcelファイルを作成する
+ * Create Excel file with sample data
  */
 async function createSampleDataFile() {
-  // 出力ファイルパス
+  // Output file path
   const outputPath = resolve(__dirname, '../../excel_files/sample-data.xlsx');
   
-  // ワークブックを作成
+  // Create workbook
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('売上データ');
+  const worksheet = workbook.addWorksheet('Sales Data');
   
-  // ヘッダー行を追加
-  worksheet.addRow(['', '1月', '2月', '3月', '4月']);
+  // Add header row
+  worksheet.addRow(['', 'Jan', 'Feb', 'Mar', 'Apr']);
   
-  // データ行を追加
-  worksheet.addRow(['2020年', 100, 120, 140, 160]);
-  worksheet.addRow(['2021年', 110, 130, 150, 170]);
-  worksheet.addRow(['2022年', 120, 140, 160, 180]);
+  // Add data rows
+  worksheet.addRow(['2020', 100, 120, 140, 160]);
+  worksheet.addRow(['2021', 110, 130, 150, 170]);
+  worksheet.addRow(['2022', 120, 140, 160, 180]);
   
-  // ヘッダー行のスタイルを設定
+  // Set header row style
   const headerRow = worksheet.getRow(1);
   headerRow.eachCell((cell) => {
     cell.font = { bold: true };
@@ -40,37 +40,37 @@ async function createSampleDataFile() {
     };
   });
   
-  // 1列目のスタイルを設定
+  // Set first column style
   for (let i = 2; i <= 4; i++) {
     const cell = worksheet.getCell(`A${i}`);
     cell.font = { bold: true };
   }
   
-  // 列幅を調整
+  // Adjust column widths
   worksheet.getColumn('A').width = 15;
   worksheet.getColumn('B').width = 10;
   worksheet.getColumn('C').width = 10;
   worksheet.getColumn('D').width = 10;
   worksheet.getColumn('E').width = 10;
   
-  // ファイルを保存
+  // Save file
   await workbook.xlsx.writeFile(outputPath);
-  console.log(`サンプルデータファイルが作成されました: ${outputPath}`);
+  console.log(`Sample data file created: ${outputPath}`);
 }
 
 /**
- * メイン関数
+ * Main function
  */
 async function main() {
   try {
     await createSampleDataFile();
-    console.log('処理が完了しました');
+    console.log('Processing completed');
   } catch (error) {
-    console.error('エラー:', error);
+    console.error('Error:', error);
   }
 }
 
-// スクリプトが直接実行された場合のみ実行
+// Execute only when script is run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }

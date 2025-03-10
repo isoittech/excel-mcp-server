@@ -1,5 +1,5 @@
 /**
- * Excel MCPサーバークラス
+ * Excel MCP Server Class
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -16,7 +16,7 @@ import {
 import ExcelJS from 'exceljs';
 import { WorkbookCache } from './types/index.js';
 
-// ハンドラーのインポート
+// Import handlers
 import { handleReadExcel, handleWriteExcel } from './handlers/dataHandlers.js';
 import { handleCreateExcel, handleCreateSheet, handleGetWorkbookMetadata } from './handlers/workbookHandlers.js';
 import { handleRenameWorksheet, handleDeleteWorksheet, handleCopyWorksheet } from './handlers/worksheetHandlers.js';
@@ -27,14 +27,14 @@ import { handleCreateChart } from './handlers/chartHandlers.js';
 import { handleCreatePivotTable } from './handlers/pivotHandlers.js';
 
 /**
- * Excel MCPサーバークラス
+ * Excel MCP Server Class
  */
 export class ExcelServer {
   private server: Server;
   private workbookCache: WorkbookCache = {};
 
   /**
-   * コンストラクタ
+   * Constructor
    */
   constructor() {
     this.server = new Server(
@@ -54,14 +54,14 @@ export class ExcelServer {
   }
 
   /**
-   * ツールハンドラーの設定
+   * Setup tool handlers
    */
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
         {
           name: 'read_excel',
-          description: 'Excelファイルからデータを読み込む',
+          description: 'Read data from Excel file',
           inputSchema: {
             type: 'object',
             properties: {
@@ -75,7 +75,7 @@ export class ExcelServer {
         },
         {
           name: 'write_excel',
-          description: 'Excelファイルにデータを書き込む',
+          description: 'Write data to Excel file',
           inputSchema: {
             type: 'object',
             properties: {
@@ -90,7 +90,7 @@ export class ExcelServer {
         },
         {
           name: 'create_sheet',
-          description: 'Excelファイルに新しいシートを作成',
+          description: 'Create a new sheet in Excel file',
           inputSchema: {
             type: 'object',
             properties: {
@@ -102,7 +102,7 @@ export class ExcelServer {
         },
         {
           name: 'create_excel',
-          description: '新しいExcelファイルを作成',
+          description: 'Create a new Excel file',
           inputSchema: {
             type: 'object',
             properties: {
@@ -114,7 +114,7 @@ export class ExcelServer {
         },
         {
           name: 'get_workbook_metadata',
-          description: 'ワークブックのメタデータを取得',
+          description: 'Get workbook metadata',
           inputSchema: {
             type: 'object',
             properties: {
@@ -126,7 +126,7 @@ export class ExcelServer {
         },
         {
           name: 'rename_worksheet',
-          description: 'ワークシートの名前を変更',
+          description: 'Rename worksheet',
           inputSchema: {
             type: 'object',
             properties: {
@@ -139,7 +139,7 @@ export class ExcelServer {
         },
         {
           name: 'delete_worksheet',
-          description: 'ワークシートを削除',
+          description: 'Delete worksheet',
           inputSchema: {
             type: 'object',
             properties: {
@@ -151,7 +151,7 @@ export class ExcelServer {
         },
         {
           name: 'copy_worksheet',
-          description: 'ワークシートをコピー',
+          description: 'Copy worksheet',
           inputSchema: {
             type: 'object',
             properties: {
@@ -164,7 +164,7 @@ export class ExcelServer {
         },
         {
           name: 'apply_formula',
-          description: 'セルに数式を適用',
+          description: 'Apply formula to cell',
           inputSchema: {
             type: 'object',
             properties: {
@@ -178,7 +178,7 @@ export class ExcelServer {
         },
         {
           name: 'validate_formula_syntax',
-          description: '数式の構文を検証',
+          description: 'Validate formula syntax',
           inputSchema: {
             type: 'object',
             properties: {
@@ -192,7 +192,7 @@ export class ExcelServer {
         },
         {
           name: 'format_range',
-          description: 'セル範囲の書式を設定',
+          description: 'Format cell range',
           inputSchema: {
             type: 'object',
             properties: {
@@ -218,7 +218,7 @@ export class ExcelServer {
         },
         {
           name: 'merge_cells',
-          description: 'セルを結合',
+          description: 'Merge cells',
           inputSchema: {
             type: 'object',
             properties: {
@@ -232,7 +232,7 @@ export class ExcelServer {
         },
         {
           name: 'unmerge_cells',
-          description: 'セルの結合を解除',
+          description: 'Unmerge cells',
           inputSchema: {
             type: 'object',
             properties: {
@@ -246,7 +246,7 @@ export class ExcelServer {
         },
         {
           name: 'copy_range',
-          description: 'セル範囲をコピー',
+          description: 'Copy cell range',
           inputSchema: {
             type: 'object',
             properties: {
@@ -262,7 +262,7 @@ export class ExcelServer {
         },
         {
           name: 'delete_range',
-          description: 'セル範囲を削除',
+          description: 'Delete cell range',
           inputSchema: {
             type: 'object',
             properties: {
@@ -277,7 +277,7 @@ export class ExcelServer {
         },
         {
           name: 'validate_excel_range',
-          description: 'Excelの範囲を検証',
+          description: 'Validate Excel range',
           inputSchema: {
             type: 'object',
             properties: {
@@ -291,7 +291,7 @@ export class ExcelServer {
         },
         {
           name: 'create_chart',
-          description: 'グラフを作成',
+          description: 'Create chart',
           inputSchema: {
             type: 'object',
             properties: {
@@ -309,7 +309,7 @@ export class ExcelServer {
         },
         {
           name: 'create_pivot_table',
-          description: 'ピボットテーブルを作成',
+          description: 'Create pivot table',
           inputSchema: {
             type: 'object',
             properties: {
@@ -384,7 +384,7 @@ export class ExcelServer {
   }
 
   /**
-   * サーバーを実行
+   * Run the server
    */
   async run() {
     try {

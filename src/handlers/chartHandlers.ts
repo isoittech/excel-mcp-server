@@ -1,8 +1,8 @@
 /**
- * グラフ操作ハンドラー
+ * Chart operation handlers
  *
- * xlsx-chartライブラリを使用してグラフを作成します。
- * このライブラリは、Node.jsでExcelチャートを作成するための機能を提供しています。
+ * Uses xlsx-chart library to create charts.
+ * This library provides functionality for creating Excel charts in Node.js.
  */
 
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
@@ -17,10 +17,10 @@ import ExcelJS from 'exceljs';
 import XLSXChart from 'xlsx-chart';
 
 /**
- * グラフを作成
- * @param args - 引数
- * @param workbookCache - ワークブックキャッシュ
- * @returns ツールレスポンス
+ * Create chart
+ * @param args - Arguments
+ * @param workbookCache - Workbook cache
+ * @returns Tool response
  */
 export async function handleCreateChart(args: CreateChartArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
@@ -29,31 +29,31 @@ export async function handleCreateChart(args: CreateChartArgs, workbookCache: Wo
     const workbook = await loadWorkbook(fullPath, workbookCache);
     const worksheet = getWorksheet(workbook, sheetName);
     
-    // データ範囲を解析
+    // Parse data range
     const range = parseCellOrRange(dataRange);
     const { startRow, startCol, endRow, endCol } = range;
     
-    // グラフタイプを検証
+    // Validate chart type
     const validChartType = validateChartType(chartType);
     if (!validChartType.valid) {
-      throw new McpError(ErrorCode.InvalidParams, validChartType.error || 'グラフタイプが無効です');
+      throw new McpError(ErrorCode.InvalidParams, validChartType.error || 'Invalid chart type');
     }
     
-    // タイトル（行ラベル）を取得
+    // Get titles (row labels)
     const titles: string[] = [];
     for (let row = startRow + 1; row <= endRow; row++) {
       const cell = worksheet.getCell(row, startCol);
       titles.push(String(cell.value || `Row ${row}`));
     }
     
-    // フィールド（列ラベル）を取得
+    // Get fields (column labels)
     const fields: string[] = [];
     for (let col = startCol + 1; col <= endCol; col++) {
       const cell = worksheet.getCell(startRow, col);
       fields.push(String(cell.value || `Column ${col}`));
     }
     
-    // データを構築
+    // Build data
     const data: Record<string, Record<string, number>> = {};
     for (let row = startRow + 1; row <= endRow; row++) {
       const rowTitle = titles[row - startRow - 1];
@@ -67,11 +67,11 @@ export async function handleCreateChart(args: CreateChartArgs, workbookCache: Wo
       }
     }
     
-    // xlsx-chartを使用してグラフを作成
+    // Create chart using xlsx-chart
     const xlsxChart = new XLSXChart();
     const opts = {
       file: fullPath,
-      chart: validChartType.type || 'column', // デフォルトはcolumn
+      chart: validChartType.type || 'column', // Default is column
       titles: titles,
       fields: fields,
       data: data,
@@ -88,7 +88,7 @@ export async function handleCreateChart(args: CreateChartArgs, workbookCache: Wo
     return {
       content: [{
         type: 'text',
-        text: `${validChartType.type}グラフが正常に作成されました`
+        text: `${validChartType.type} chart created successfully`
       }]
     };
   } catch (error) {
@@ -97,15 +97,15 @@ export async function handleCreateChart(args: CreateChartArgs, workbookCache: Wo
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `グラフ作成エラー: ${error.message}` : 'グラフ作成中に不明なエラーが発生しました'
+      error instanceof Error ? `Chart creation error: ${error.message}` : 'Unknown error occurred while creating chart'
     );
   }
 }
 
 /**
- * グラフタイプを検証
- * @param chartType - グラフタイプ
- * @returns 検証結果
+ * Validate chart type
+ * @param chartType - Chart type
+ * @returns Validation result
  */
 function validateChartType(chartType: string): { valid: boolean; type?: string; error?: string } {
   const validTypes = [
@@ -114,12 +114,12 @@ function validateChartType(chartType: string): { valid: boolean; type?: string; 
   
   const lowerType = chartType.toLowerCase();
   
-  // 完全一致
+  // Exact match
   if (validTypes.includes(lowerType)) {
     return { valid: true, type: lowerType };
   }
   
-  // 部分一致
+  // Partial match
   for (const type of validTypes) {
     if (lowerType.includes(type)) {
       return { valid: true, type };
@@ -128,6 +128,6 @@ function validateChartType(chartType: string): { valid: boolean; type?: string; 
   
   return {
     valid: false,
-    error: `グラフタイプ "${chartType}" は無効です。有効なタイプ: ${validTypes.join(', ')}`
+    error: `Chart type "${chartType}" is invalid. Valid types: ${validTypes.join(', ')}`
   };
 }

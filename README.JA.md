@@ -1,51 +1,51 @@
-# EXCEL Operation MCP Server
+# EXCEL 操作 MCP サーバー
 
-This server provides MCP tools for manipulating local EXCEL files.
+このサーバーはローカルの EXCEL ファイルを操作するための MCP ツールを提供します。
 
-## Table of Contents
+## 目次
 
-1. [System Requirements](#system-requirements)
-2. [Installation](#installation)
-3. [Usage](#usage)
-4. [Notes](#notes)
+1. [システム要件](#システム要件)
+2. [インストール](#インストール)
+3. [使用方法](#使用方法)
+4. [注意事項](#注意事項)
 
-## System Requirements
+## システム要件
 
-- Node.js: 18.x or higher
-- npm: 9.x or higher
-- Excel file format: .xlsx
-- Supported OS: Windows 10/11, macOS 12+, Linux (Ubuntu 20.04+)
+- Node.js: 18.x 以上
+- npm: 9.x 以上
+- Excel ファイル形式: .xlsx
+- 対応 OS: Windows 10/11, macOS 12+, Linux (Ubuntu 20.04+)
 
-## Installation
+## インストール
 
-### 1. Clone the Repository
+### 1. リポジトリのクローン
 
 ```bash
 git clone git@github.com:virtuarian/excel-server.git
 cd excel-server
 ```
 
-### 2. Install Dependencies and Build
+### 2. 依存関係のインストールとビルド
 
 ```bash
 npm install
 npm run build
 ```
 
-### 3. Configure MCP Server
+### 3. MCP サーバーの設定
 
-▼ When using from Cline
+▼ Cline から使用する場合
 
-1. Open MCP Servers
-2. Click Edit MCP Settings
-3. Add the following excel entry:
+1. MCP サーバーを開く
+2. Edit MCP Settings をクリック
+3. 以下の excel エントリを追加:
 
 ```json
 {
   "mcpServers": {
     "excel": {
       "command": "node",
-      "args": ["/cloned-path/build/index.js"],  // Folder where Github is cloned
+      "args": ["/cloned-path/build/index.js"],  // Github をクローンしたフォルダ
       "env": {},
       "disabled": false,
       "alwaysAllow": []
@@ -54,11 +54,11 @@ npm run build
 }
 ```
 
-※ Alternatively, manually open and edit the json file
+※ または、json ファイルを手動で開いて編集することもできます
 
-## Usage
+## 使用方法
 
-### Read EXCEL File
+### EXCEL ファイルの読み込み
 
 ```json
 {
@@ -72,7 +72,7 @@ npm run build
 }
 ```
 
-### Write to EXCEL File
+### EXCEL ファイルへの書き込み
 
 ```json
 {
@@ -89,7 +89,7 @@ npm run build
 }
 ```
 
-### Create New Sheet
+### 新規シートの作成
 
 ```json
 {
@@ -102,7 +102,7 @@ npm run build
 }
 ```
 
-### Create New EXCEL File
+### 新規 EXCEL ファイルの作成
 
 ```json
 {
@@ -110,12 +110,12 @@ npm run build
   "tool_name": "create_excel",
   "arguments": {
     "filePath": "/path/to/new_file.xlsx",
-    "sheetName": "Sheet1"  // Optional, default is "Sheet1"
+    "sheetName": "Sheet1"  // オプション、デフォルトは "Sheet1"
   }
 }
 ```
 
-### Get Workbook Metadata
+### ワークブックのメタデータ取得
 
 ```json
 {
@@ -123,12 +123,12 @@ npm run build
   "tool_name": "get_workbook_metadata",
   "arguments": {
     "filePath": "/path/to/file.xlsx",
-    "includeRanges": false  // Optional, whether to include range information
+    "includeRanges": false  // オプション、使用範囲情報を含めるかどうか
   }
 }
 ```
 
-### Rename Worksheet
+### ワークシート名の変更
 
 ```json
 {
@@ -142,7 +142,7 @@ npm run build
 }
 ```
 
-### Delete Worksheet
+### ワークシートの削除
 
 ```json
 {
@@ -155,7 +155,7 @@ npm run build
 }
 ```
 
-### Copy Worksheet
+### ワークシートのコピー
 
 ```json
 {
@@ -169,7 +169,7 @@ npm run build
 }
 ```
 
-### Apply Formula
+### 数式の適用
 
 ```json
 {
@@ -184,7 +184,7 @@ npm run build
 }
 ```
 
-### Validate Formula Syntax
+### 数式構文の検証
 
 ```json
 {
@@ -199,7 +199,7 @@ npm run build
 }
 ```
 
-### Format Cell Range
+### セル範囲の書式設定
 
 ```json
 {
@@ -219,7 +219,7 @@ npm run build
 }
 ```
 
-### Merge Cells
+### セルの結合
 
 ```json
 {
@@ -234,7 +234,7 @@ npm run build
 }
 ```
 
-### Unmerge Cells
+### セルの結合解除
 
 ```json
 {
@@ -249,7 +249,7 @@ npm run build
 }
 ```
 
-### Copy Cell Range
+### セル範囲のコピー
 
 ```json
 {
@@ -261,12 +261,12 @@ npm run build
     "sourceStart": "A1",
     "sourceEnd": "C3",
     "targetStart": "D1",
-    "targetSheet": "Sheet2"  // Optional, defaults to source sheet if omitted
+    "targetSheet": "Sheet2"  // オプション、省略するとソースシートと同じ
   }
 }
 ```
 
-### Delete Cell Range
+### セル範囲の削除
 
 ```json
 {
@@ -277,12 +277,12 @@ npm run build
     "sheetName": "Sheet1",
     "startCell": "A1",
     "endCell": "C3",
-    "shiftDirection": "up"  // "up" or "left", defaults to "up"
+    "shiftDirection": "up"  // "up" または "left"、デフォルトは "up"
   }
 }
 ```
 
-### Validate Excel Range
+### Excel 範囲の検証
 
 ```json
 {
@@ -292,12 +292,12 @@ npm run build
     "filePath": "/path/to/file.xlsx",
     "sheetName": "Sheet1",
     "startCell": "A1",
-    "endCell": "C3"  // Optional
+    "endCell": "C3"  // オプション
   }
 }
 ```
 
-### Create Chart
+### グラフの作成
 
 ```json
 {
@@ -309,14 +309,14 @@ npm run build
     "dataRange": "A1:C10",
     "chartType": "column",  // "column", "line", "bar", "area", "scatter", "pie"
     "targetCell": "E1",
-    "title": "Sample Chart",  // Optional
-    "xAxis": "X Axis Label",  // Optional
-    "yAxis": "Y Axis Label"   // Optional
+    "title": "サンプルグラフ",  // オプション
+    "xAxis": "X軸ラベル",  // オプション
+    "yAxis": "Y軸ラベル"   // オプション
   }
 }
 ```
 
-### Create Pivot Table
+### ピボットテーブルの作成
 
 ```json
 {
@@ -328,22 +328,22 @@ npm run build
     "dataRange": "A1:D100",
     "rows": ["Category"],
     "values": ["Sales"],
-    "columns": ["Region"],  // Optional
-    "aggFunc": "sum"  // "sum", "count", "average", "max", "min", etc.
+    "columns": ["Region"],  // オプション
+    "aggFunc": "sum"  // "sum", "count", "average", "max", "min" など
   }
 }
 ```
 
-## Notes
+## 注意事項
 
-- File paths must be specified as absolute paths
-- If no sheet name is specified, the first sheet will be the target
-- Range specification should be in formats like "A1:C10"
-- Specifying an existing file path in create_excel will result in an error
-- Due to limitations in the current version of ExcelJS, the pivot table functionality does not actually create pivot tables but only returns success messages
+- ファイルパスは絶対パスで指定する必要があります
+- シート名が指定されていない場合、最初のシートが対象となります
+- 範囲指定は "A1:C10" のような形式で行います
+- create_excel で既存のファイルパスを指定するとエラーになります
+- ピボットテーブル機能は現在の ExcelJS の制限により、実際にはピボットテーブルを作成せず、成功メッセージのみを返します
 
-## Author
-Author: virtuarian
+## 作者
+作者: virtuarian
 
-## License
-This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+## ライセンス
+この MCP サーバーは MIT ライセンスの下で提供されています。これは、MIT ライセンスの条件に従って、ソフトウェアを自由に使用、変更、配布できることを意味します。詳細については、プロジェクトリポジトリの LICENSE ファイルを参照してください。

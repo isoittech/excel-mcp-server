@@ -1,5 +1,5 @@
 /**
- * ファイル操作ユーティリティ関数
+ * File operation utility functions
  */
 
 import fs from 'fs';
@@ -8,64 +8,64 @@ import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import ExcelJS from 'exceljs';
 import { WorkbookCache } from '../types/index.js';
 
-// Excelファイルのデフォルトの保存先
+// Default directory for Excel files
 const DEFAULT_EXCEL_FILES_PATH = './excel_files';
 
-// 環境変数からExcelファイルのパスを取得
+// Get Excel files path from environment variable
 export const EXCEL_FILES_PATH = process.env.EXCEL_FILES_PATH || DEFAULT_EXCEL_FILES_PATH;
 
-// ディレクトリが存在しない場合は作成
+// Create directory if it doesn't exist
 if (!fs.existsSync(EXCEL_FILES_PATH)) {
   fs.mkdirSync(EXCEL_FILES_PATH, { recursive: true });
 }
 
 /**
- * Excelファイルのフルパスを取得
- * @param filename - Excelファイル名
- * @returns Excelファイルのフルパス
+ * Get full path of Excel file
+ * @param filename - Excel filename
+ * @returns Full path of Excel file
  */
 export function getExcelPath(filename: string): string {
-  // すでに絶対パスの場合はそのまま返す
+  // Return as is if already an absolute path
   if (path.isAbsolute(filename)) {
     return filename;
   }
   
-  // 設定されたExcelファイルパスを使用
+  // Use configured Excel files path
   return path.join(EXCEL_FILES_PATH, filename);
 }
 
 /**
- * ワークブックをロード
- * @param filePath - Excelファイルのパス
- * @param workbookCache - ワークブックキャッシュ
- * @returns ロードされたワークブック
+ * Load workbook
+ * @param filePath - Excel file path
+ * @param workbookCache - Workbook cache
+ * @returns Loaded workbook
  */
 export async function loadWorkbook(filePath: string, workbookCache: WorkbookCache): Promise<ExcelJS.Workbook> {
-  // キャッシュにある場合はキャッシュから返す
+  // Return from cache if available
   if (workbookCache[filePath]) {
     return workbookCache[filePath];
   }
 
-  // ファイルが存在しない場合はエラー
+  // Error if file doesn't exist
   if (!fs.existsSync(filePath)) {
-    throw new McpError(ErrorCode.InvalidParams, `ファイル ${filePath} が見つかりません`);
+    throw new McpError(ErrorCode.InvalidParams, `File ${filePath} not found`);
   }
 
-  // ワークブックをロード
+  // Load workbook
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(filePath);
   
-  // キャッシュに追加
+  // Add to cache
   workbookCache[filePath] = workbook;
   
   return workbook;
 }
 
 /**
- * ワークシートを取得
- * @param workbook - ワークブック
- * @param sheetName - シート名（省略時は最初のシート）
- * @returns ワークシート
+ * Get worksheet
+ * @param workbook - Workbook
+ * @param sheetName - Sheet name (first sheet if omitted)
+ * @returns Worksheet
  */
 export function getWorksheet(workbook: ExcelJS.Workbook, sheetName?: string): ExcelJS.Worksheet {
   const worksheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0];
@@ -73,7 +73,7 @@ export function getWorksheet(workbook: ExcelJS.Workbook, sheetName?: string): Ex
   if (!worksheet) {
     throw new McpError(
       ErrorCode.InvalidParams,
-      `シート ${sheetName || '(最初のシート)'} が見つかりません`
+      `Sheet ${sheetName || '(first sheet)'} not found`
     );
   }
   
@@ -81,10 +81,10 @@ export function getWorksheet(workbook: ExcelJS.Workbook, sheetName?: string): Ex
 }
 
 /**
- * ファイルの拡張子を確認
- * @param filePath - ファイルパス
- * @param expectedExt - 期待する拡張子（例：'.xlsx'）
- * @returns 拡張子が一致する場合はtrue、それ以外はfalse
+ * Check file extension
+ * @param filePath - File path
+ * @param expectedExt - Expected extension (e.g., '.xlsx')
+ * @returns true if extension matches, false otherwise
  */
 export function checkFileExtension(filePath: string, expectedExt: string): boolean {
   const ext = path.extname(filePath).toLowerCase();
@@ -92,17 +92,17 @@ export function checkFileExtension(filePath: string, expectedExt: string): boole
 }
 
 /**
- * Excelファイルの拡張子を確認
- * @param filePath - ファイルパス
- * @returns 拡張子が.xlsxの場合はtrue、それ以外はfalse
+ * Check if file is an Excel file
+ * @param filePath - File path
+ * @returns true if extension is .xlsx, false otherwise
  */
 export function isExcelFile(filePath: string): boolean {
   return checkFileExtension(filePath, '.xlsx');
 }
 
 /**
- * ファイルパスのディレクトリが存在しない場合は作成
- * @param filePath - ファイルパス
+ * Create directory if it doesn't exist for file path
+ * @param filePath - File path
  */
 export function ensureDirectoryExists(filePath: string): void {
   const dir = path.dirname(filePath);

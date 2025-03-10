@@ -1,7 +1,7 @@
 /**
- * xlsx-chartライブラリを使用したグラフ作成の実装例
+ * Implementation example of chart creation using xlsx-chart library
  *
- * 注意: このファイルを実行するには、まず xlsx-chart ライブラリをインストールする必要があります。
+ * Note: To run this file, you need to install the xlsx-chart library first.
  * npm install xlsx-chart --save
  */
 
@@ -10,44 +10,44 @@ import { resolve, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import ExcelJS from 'exceljs';
 
-// ESモジュールで__dirnameを使用するための設定
+// Configuration to use __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * サンプルデータを使用してグラフを作成する
+ * Create chart using sample data
  */
 async function createSampleChart() {
-  // サンプルデータ
+  // Sample data
   const data = {
-    '2020年': {
-      '1月': 100,
-      '2月': 120,
-      '3月': 140,
-      '4月': 160
+    '2020': {
+      'Jan': 100,
+      'Feb': 120,
+      'Mar': 140,
+      'Apr': 160
     },
-    '2021年': {
-      '1月': 110,
-      '2月': 130,
-      '3月': 150,
-      '4月': 170
+    '2021': {
+      'Jan': 110,
+      'Feb': 130,
+      'Mar': 150,
+      'Apr': 170
     },
-    '2022年': {
-      '1月': 120,
-      '2月': 140,
-      '3月': 160,
-      '4月': 180
+    '2022': {
+      'Jan': 120,
+      'Feb': 140,
+      'Mar': 160,
+      'Apr': 180
     }
   };
 
-  // タイトルとフィールド
+  // Titles and fields
   const titles = Object.keys(data);
   const fields = Object.keys(data[titles[0]]);
 
-  // 出力ファイルパス
+  // Output file path
   const outputPath = resolve(__dirname, '../excel_files/chart-example.xlsx');
 
-  // xlsx-chartを使用してグラフを作成
+  // Create chart using xlsx-chart
   const xlsxChart = new XLSXChart();
   const opts = {
     file: outputPath,
@@ -61,10 +61,10 @@ async function createSampleChart() {
   return new Promise<void>((resolve, reject) => {
     xlsxChart.writeFile(opts, (err) => {
       if (err) {
-        console.error('グラフ作成エラー:', err);
+        console.error('Chart creation error:', err);
         reject(err);
       } else {
-        console.log(`グラフが正常に作成されました: ${outputPath}`);
+        console.log(`Chart created successfully: ${outputPath}`);
         resolve();
       }
     });
@@ -72,12 +72,12 @@ async function createSampleChart() {
 }
 
 /**
- * 既存のExcelファイルからデータを読み込んでグラフを作成する
- * @param filePath Excelファイルパス
- * @param sheetName シート名
- * @param dataRange データ範囲（例: 'A1:E4'）
- * @param chartType グラフタイプ
- * @param title グラフタイトル
+ * Create chart from data loaded from existing Excel file
+ * @param filePath Excel file path
+ * @param sheetName Sheet name
+ * @param dataRange Data range (e.g., 'A1:E4')
+ * @param chartType Chart type
+ * @param title Chart title
  */
 async function createChartFromExcel(
   filePath: string,
@@ -87,22 +87,22 @@ async function createChartFromExcel(
   title?: string
 ): Promise<void> {
   try {
-    // ExcelJSでファイルを読み込む
+    // Load file with ExcelJS
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(filePath);
     const worksheet = workbook.getWorksheet(sheetName);
     
     if (!worksheet) {
-      throw new Error(`シート '${sheetName}' が見つかりません`);
+      throw new Error(`Sheet '${sheetName}' not found`);
     }
 
-    // データ範囲を解析
+    // Parse data range
     const [startCell, endCell] = dataRange.split(':');
     const startMatch = startCell.match(/([A-Z]+)(\d+)/);
     const endMatch = endCell.match(/([A-Z]+)(\d+)/);
     
     if (!startMatch || !endMatch) {
-      throw new Error(`無効なデータ範囲: ${dataRange}`);
+      throw new Error(`Invalid data range: ${dataRange}`);
     }
     
     const startCol = columnNameToNumber(startMatch[1]);
@@ -110,21 +110,21 @@ async function createChartFromExcel(
     const endCol = columnNameToNumber(endMatch[1]);
     const endRow = parseInt(endMatch[2]);
 
-    // タイトル（行ラベル）を取得
+    // Get titles (row labels)
     const titles: string[] = [];
     for (let row = startRow + 1; row <= endRow; row++) {
       const cell = worksheet.getCell(row, startCol);
       titles.push(String(cell.value || `Row ${row}`));
     }
 
-    // フィールド（列ラベル）を取得
+    // Get fields (column labels)
     const fields: string[] = [];
     for (let col = startCol + 1; col <= endCol; col++) {
       const cell = worksheet.getCell(startRow, col);
       fields.push(String(cell.value || `Column ${col}`));
     }
 
-    // データを構築
+    // Build data
     const data: Record<string, Record<string, number>> = {};
     for (let row = startRow + 1; row <= endRow; row++) {
       const rowTitle = titles[row - startRow - 1];
@@ -138,10 +138,10 @@ async function createChartFromExcel(
       }
     }
 
-    // 出力ファイルパス
+    // Output file path
     const outputPath = resolve(dirname(filePath), `${basename(filePath, '.xlsx')}-chart.xlsx`);
 
-    // xlsx-chartを使用してグラフを作成
+    // Create chart using xlsx-chart
     const xlsxChart = new XLSXChart();
     const opts = {
       file: outputPath,
@@ -155,24 +155,24 @@ async function createChartFromExcel(
     return new Promise<void>((resolvePromise, reject) => {
       xlsxChart.writeFile(opts, (err) => {
         if (err) {
-          console.error('グラフ作成エラー:', err);
+          console.error('Chart creation error:', err);
           reject(err);
         } else {
-          console.log(`グラフが正常に作成されました: ${outputPath}`);
+          console.log(`Chart created successfully: ${outputPath}`);
           resolvePromise();
         }
       });
     });
   } catch (error) {
-    console.error('エラー:', error);
+    console.error('Error:', error);
     throw error;
   }
 }
 
 /**
- * 列名を数値に変換する（例: 'A' -> 1, 'Z' -> 26, 'AA' -> 27）
- * @param columnName 列名
- * @returns 列番号
+ * Convert column name to number (e.g., 'A' -> 1, 'Z' -> 26, 'AA' -> 27)
+ * @param columnName Column name
+ * @returns Column number
  */
 function columnNameToNumber(columnName: string): number {
   let result = 0;
@@ -183,29 +183,29 @@ function columnNameToNumber(columnName: string): number {
 }
 
 /**
- * メイン関数
+ * Main function
  */
 async function main() {
   try {
-    // サンプルデータでグラフを作成
+    // Create chart with sample data
     await createSampleChart();
     
-    // 既存のExcelファイルからグラフを作成
+    // Create chart from existing Excel file
     // await createChartFromExcel(
     //   resolve(__dirname, '../excel_files/sample-data.xlsx'),
     //   'Sheet1',
     //   'A1:E4',
     //   'line',
-    //   '売上推移'
+    //   'Sales Trend'
     // );
     
-    console.log('処理が完了しました');
+    console.log('Processing completed');
   } catch (error) {
-    console.error('エラー:', error);
+    console.error('Error:', error);
   }
 }
 
-// ESモジュールでの直接実行の検出
+// Detect direct execution in ES modules
 if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }

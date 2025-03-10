@@ -1,111 +1,111 @@
 /**
- * xlsx-chartライブラリの型定義
+ * Type definitions for xlsx-chart library
  * https://github.com/objectum/xlsx-chart
  */
 
 declare module 'xlsx-chart' {
   /**
-   * チャート作成オプション
+   * Chart creation options
    */
   interface XLSXChartOptions {
     /**
-     * 出力ファイルパス
+     * Output file path
      */
     file?: string;
     
     /**
-     * チャートタイプ
+     * Chart type
      * 'column', 'bar', 'line', 'area', 'radar', 'scatter', 'pie'
      */
     chart: string;
     
     /**
-     * タイトル（行ラベル）
+     * Titles (row labels)
      */
     titles: string[];
     
     /**
-     * フィールド（列ラベル）
+     * Fields (column labels)
      */
     fields: string[];
     
     /**
-     * データ
+     * Data
      * { "Title1": { "Field1": 5, "Field2": 10 }, "Title2": { "Field1": 10, "Field2": 5 } }
      */
     data: Record<string, Record<string, number>>;
     
     /**
-     * チャートタイトル
+     * Chart title
      */
     chartTitle?: string;
     
     /**
-     * テンプレートファイルパス
+     * Template file path
      */
     templatePath?: string;
   }
 
   /**
-   * 複数チャート作成オプション
+   * Multiple chart creation options
    */
   interface XLSXMultipleChartOptions {
     /**
-     * 出力ファイルパス
+     * Output file path
      */
     file?: string;
     
     /**
-     * チャート設定の配列
+     * Array of chart settings
      */
     charts: {
       /**
-       * チャートタイプ
+       * Chart type
        */
       chart: string;
       
       /**
-       * タイトル（行ラベル）
+       * Titles (row labels)
        */
       titles: string[];
       
       /**
-       * フィールド（列ラベル）
+       * Fields (column labels)
        */
       fields: string[];
       
       /**
-       * データ
+       * Data
        */
       data: Record<string, Record<string, number>>;
       
       /**
-       * チャートタイトル
+       * Chart title
        */
       chartTitle?: string;
     }[];
   }
 
   /**
-   * XLSXChartクラス
+   * XLSXChart class
    */
   class XLSXChart {
     /**
-     * コンストラクタ
+     * Constructor
      */
     constructor();
     
     /**
-     * チャートを作成してファイルに書き込む
-     * @param options チャート作成オプション
-     * @param callback コールバック関数
+     * Create chart and write to file
+     * @param options Chart creation options
+     * @param callback Callback function
      */
     writeFile(options: XLSXChartOptions | XLSXMultipleChartOptions, callback: (err: Error | null) => void): void;
     
     /**
-     * チャートデータを生成する
-     * @param options チャート作成オプション
-     * @param callback コールバック関数
+     * Generate chart data
+     * @param options Chart creation options
+     * @param callback Callback function
      */
     generate(options: XLSXChartOptions | XLSXMultipleChartOptions, callback: (err: Error | null, data: Buffer) => void): void;
   }

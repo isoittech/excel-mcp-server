@@ -1,5 +1,5 @@
 /**
- * 書式設定ハンドラー
+ * Format handlers
  */
 
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
@@ -20,10 +20,10 @@ type HorizontalAlignment = 'left' | 'center' | 'right' | 'fill' | 'justify' | 'c
 type VerticalAlignment = 'top' | 'middle' | 'bottom' | 'distributed' | 'justify';
 
 /**
- * セル範囲の書式を設定
- * @param args - 引数
- * @param workbookCache - ワークブックキャッシュ
- * @returns ツールレスポンス
+ * Format cell range
+ * @param args - Arguments
+ * @param workbookCache - Workbook cache
+ * @returns Tool response
  */
 export async function handleFormatRange(args: FormatRangeArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
@@ -50,7 +50,7 @@ export async function handleFormatRange(args: FormatRangeArgs, workbookCache: Wo
     const workbook = await loadWorkbook(fullPath, workbookCache);
     const worksheet = getWorksheet(workbook, sheetName);
     
-    // 範囲を解析
+    // Parse range
     let range;
     if (endCell) {
       range = parseCellOrRange(`${startCell}:${endCell}`);
@@ -58,12 +58,12 @@ export async function handleFormatRange(args: FormatRangeArgs, workbookCache: Wo
       range = parseCellOrRange(startCell);
     }
     
-    // セル範囲に書式を適用
+    // Apply formatting to cell range
     for (let row = range.startRow; row <= range.endRow; row++) {
       for (let col = range.startCol; col <= range.endCol; col++) {
         const cell = worksheet.getCell(row, col);
         
-        // フォント設定
+        // Font settings
         if (!cell.font) cell.font = {};
         if (bold !== undefined) cell.font.bold = bold;
         if (italic !== undefined) cell.font.italic = italic;
@@ -71,7 +71,7 @@ export async function handleFormatRange(args: FormatRangeArgs, workbookCache: Wo
         if (fontSize !== undefined) cell.font.size = fontSize;
         if (fontColor !== undefined) cell.font.color = { argb: parseColor(fontColor) };
         
-        // 背景色
+        // Background color
         if (bgColor !== undefined) {
           cell.fill = {
             type: 'pattern',
@@ -80,7 +80,7 @@ export async function handleFormatRange(args: FormatRangeArgs, workbookCache: Wo
           } as ExcelJS.Fill;
         }
         
-        // 罫線
+        // Borders
         if (borderStyle !== undefined) {
           const style = parseBorderStyle(borderStyle);
           const color = borderColor ? { argb: parseColor(borderColor) } : { argb: 'FF000000' };
@@ -94,12 +94,12 @@ export async function handleFormatRange(args: FormatRangeArgs, workbookCache: Wo
           };
         }
         
-        // 数値書式
+        // Number format
         if (numberFormat !== undefined) {
           cell.numFmt = numberFormat;
         }
         
-        // 配置
+        // Alignment
         if (alignment !== undefined || wrapText !== undefined) {
           if (!cell.alignment) cell.alignment = {};
           
@@ -116,18 +116,18 @@ export async function handleFormatRange(args: FormatRangeArgs, workbookCache: Wo
       }
     }
     
-    // セルの結合
+    // Merge cells
     if (mergeCells) {
       worksheet.mergeCells(range.startRow, range.startCol, range.endRow, range.endCol);
     }
     
-    // ファイルを保存
+    // Save file
     await workbook.xlsx.writeFile(fullPath);
     
     return {
       content: [{
         type: 'text',
-        text: `範囲 ${startCell}${endCell ? `:${endCell}` : ''} の書式が正常に設定されました`
+        text: `Format applied successfully to range ${startCell}${endCell ? `:${endCell}` : ''}`
       }]
     };
   } catch (error) {
@@ -136,16 +136,16 @@ export async function handleFormatRange(args: FormatRangeArgs, workbookCache: Wo
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `書式設定エラー: ${error.message}` : '書式設定中に不明なエラーが発生しました'
+      error instanceof Error ? `Formatting error: ${error.message}` : 'Unknown error occurred while formatting'
     );
   }
 }
 
 /**
- * セルを結合
- * @param args - 引数
- * @param workbookCache - ワークブックキャッシュ
- * @returns ツールレスポンス
+ * Merge cells
+ * @param args - Arguments
+ * @param workbookCache - Workbook cache
+ * @returns Tool response
  */
 export async function handleMergeCells(args: MergeCellsArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
@@ -154,19 +154,19 @@ export async function handleMergeCells(args: MergeCellsArgs, workbookCache: Work
     const workbook = await loadWorkbook(fullPath, workbookCache);
     const worksheet = getWorksheet(workbook, sheetName);
     
-    // 範囲を解析
+    // Parse range
     const range = parseCellOrRange(`${startCell}:${endCell}`);
     
-    // セルを結合
+    // Merge cells
     worksheet.mergeCells(range.startRow, range.startCol, range.endRow, range.endCol);
     
-    // ファイルを保存
+    // Save file
     await workbook.xlsx.writeFile(fullPath);
     
     return {
       content: [{
         type: 'text',
-        text: `セル範囲 ${startCell}:${endCell} が正常に結合されました`
+        text: `Cell range ${startCell}:${endCell} merged successfully`
       }]
     };
   } catch (error) {
@@ -175,16 +175,16 @@ export async function handleMergeCells(args: MergeCellsArgs, workbookCache: Work
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `セル結合エラー: ${error.message}` : 'セル結合中に不明なエラーが発生しました'
+      error instanceof Error ? `Cell merge error: ${error.message}` : 'Unknown error occurred while merging cells'
     );
   }
 }
 
 /**
- * セルの結合を解除
- * @param args - 引数
- * @param workbookCache - ワークブックキャッシュ
- * @returns ツールレスポンス
+ * Unmerge cells
+ * @param args - Arguments
+ * @param workbookCache - Workbook cache
+ * @returns Tool response
  */
 export async function handleUnmergeCells(args: UnmergeCellsArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
@@ -193,19 +193,19 @@ export async function handleUnmergeCells(args: UnmergeCellsArgs, workbookCache: 
     const workbook = await loadWorkbook(fullPath, workbookCache);
     const worksheet = getWorksheet(workbook, sheetName);
     
-    // 範囲を解析
+    // Parse range
     const range = parseCellOrRange(`${startCell}:${endCell}`);
     
-    // セルの結合を解除
+    // Unmerge cells
     worksheet.unMergeCells(range.startRow, range.startCol, range.endRow, range.endCol);
     
-    // ファイルを保存
+    // Save file
     await workbook.xlsx.writeFile(fullPath);
     
     return {
       content: [{
         type: 'text',
-        text: `セル範囲 ${startCell}:${endCell} の結合が正常に解除されました`
+        text: `Cell range ${startCell}:${endCell} unmerged successfully`
       }]
     };
   } catch (error) {
@@ -214,28 +214,28 @@ export async function handleUnmergeCells(args: UnmergeCellsArgs, workbookCache: 
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `セル結合解除エラー: ${error.message}` : 'セル結合解除中に不明なエラーが発生しました'
+      error instanceof Error ? `Cell unmerge error: ${error.message}` : 'Unknown error occurred while unmerging cells'
     );
   }
 }
 
 /**
- * 色文字列をARGB形式に変換
- * @param color - 色文字列（例：'#FF0000', 'red'）
- * @returns ARGB形式の色文字列
+ * Convert color string to ARGB format
+ * @param color - Color string (e.g., '#FF0000', 'red')
+ * @returns Color string in ARGB format
  */
 function parseColor(color: string): string {
-  // 既にARGB形式の場合
+  // If already in ARGB format
   if (/^[0-9A-Fa-f]{8}$/.test(color)) {
     return color.toUpperCase();
   }
   
-  // #RRGGBB形式の場合
+  // If in #RRGGBB format
   if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
     return `FF${color.substring(1).toUpperCase()}`;
   }
   
-  // 色名の場合
+  // If color name
   const colorMap: Record<string, string> = {
     'black': 'FF000000',
     'white': 'FFFFFFFF',
@@ -261,14 +261,14 @@ function parseColor(color: string): string {
     return colorMap[lowerColor];
   }
   
-  // デフォルト（黒）
+  // Default (black)
   return 'FF000000';
 }
 
 /**
- * 罫線スタイルを解析
- * @param style - 罫線スタイル文字列
- * @returns ExcelJSの罫線スタイル
+ * Parse border style
+ * @param style - Border style string
+ * @returns ExcelJS border style
  */
 function parseBorderStyle(style: string): BorderStyle | undefined {
   const styleMap: Record<string, BorderStyle | undefined> = {
@@ -286,16 +286,16 @@ function parseBorderStyle(style: string): BorderStyle | undefined {
 }
 
 /**
- * 配置を解析
- * @param alignment - 配置文字列
- * @returns 水平・垂直配置
+ * Parse alignment
+ * @param alignment - Alignment string
+ * @returns Horizontal and vertical alignment
  */
 function parseAlignment(alignment: string): { horizontal?: HorizontalAlignment; vertical?: VerticalAlignment } {
   const result: { horizontal?: HorizontalAlignment; vertical?: VerticalAlignment } = {};
   
   const lowerAlignment = alignment.toLowerCase();
   
-  // 水平配置
+  // Horizontal alignment
   if (lowerAlignment.includes('left')) {
     result.horizontal = 'left';
   } else if (lowerAlignment.includes('center')) {
@@ -304,7 +304,7 @@ function parseAlignment(alignment: string): { horizontal?: HorizontalAlignment; 
     result.horizontal = 'right';
   }
   
-  // 垂直配置
+  // Vertical alignment
   if (lowerAlignment.includes('top')) {
     result.vertical = 'top';
   } else if (lowerAlignment.includes('middle')) {

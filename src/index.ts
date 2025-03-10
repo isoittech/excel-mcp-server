@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 /**
  * Excel MCP Server
- * メインエントリーポイント
+ * Main entry point
  */
 
 import { ExcelServer } from './excelServer.js';
 import fs from 'fs';
 import path from 'path';
 
-// 環境変数からExcelファイルのパスを取得
+// Get Excel files path from environment variable
 const EXCEL_FILES_PATH = process.env.EXCEL_FILES_PATH || './excel_files';
 
-// ディレクトリが存在しない場合は作成
+// Create directory if it doesn't exist
 if (!fs.existsSync(EXCEL_FILES_PATH)) {
   fs.mkdirSync(EXCEL_FILES_PATH, { recursive: true });
 }
 
-// サーバーを起動
+// Start the server
 console.error(`Starting Excel MCP server (files directory: ${EXCEL_FILES_PATH})`);
 const server = new ExcelServer();
 server.run().catch((error) => {
@@ -24,7 +24,7 @@ server.run().catch((error) => {
   process.exit(1);
 });
 
-// シグナルハンドリング
+// Signal handling
 process.on('SIGINT', () => {
   console.error('Server stopped by user');
   process.exit(0);

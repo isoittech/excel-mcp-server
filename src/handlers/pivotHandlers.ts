@@ -1,9 +1,9 @@
 /**
- * ピボットテーブル操作ハンドラー
+ * Pivot table operation handlers
  * 
- * 注: ExcelJSのピボットテーブル機能は限定的なため、
- * 現在の実装では実際にピボットテーブルを作成せず、成功メッセージのみを返します。
- * 将来的にはExcelJSのピボットテーブル機能が改善されるか、別のライブラリを使用することを検討してください。
+ * Note: Due to limitations in ExcelJS pivot table functionality,
+ * the current implementation does not actually create pivot tables but only returns success messages.
+ * Consider using an improved version of ExcelJS or a different library in the future.
  */
 
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
@@ -16,10 +16,10 @@ import { loadWorkbook, getExcelPath, getWorksheet } from '../utils/fileUtils.js'
 import { parseCellOrRange } from '../utils/cellUtils.js';
 
 /**
- * ピボットテーブルを作成
- * @param args - 引数
- * @param workbookCache - ワークブックキャッシュ
- * @returns ツールレスポンス
+ * Create pivot table
+ * @param args - Arguments
+ * @param workbookCache - Workbook cache
+ * @returns Tool response
  */
 export async function handleCreatePivotTable(args: CreatePivotTableArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
@@ -28,36 +28,36 @@ export async function handleCreatePivotTable(args: CreatePivotTableArgs, workboo
     const workbook = await loadWorkbook(fullPath, workbookCache);
     const worksheet = getWorksheet(workbook, sheetName);
     
-    // データ範囲を解析
+    // Parse data range
     const range = parseCellOrRange(dataRange);
     
-    // 集計関数を検証
+    // Validate aggregation function
     const validAggFunc = validateAggFunc(aggFunc);
     if (!validAggFunc.valid) {
-      throw new McpError(ErrorCode.InvalidParams, validAggFunc.error || '集計関数が無効です');
+      throw new McpError(ErrorCode.InvalidParams, validAggFunc.error || 'Invalid aggregation function');
     }
     
-    // 注: 現在のExcelJSのバージョンではピボットテーブル機能が限定的なため、
-    // 実際にはピボットテーブルを作成せず、成功メッセージのみを返します。
+    // Note: Due to limitations in the current version of ExcelJS,
+    // we don't actually create a pivot table but only return a success message.
     
-    // 将来的な実装のためのコメント:
-    // 1. データを取得
-    // 2. ピボットテーブルを作成
-    // 3. 行、列、値、集計関数を設定
-    // 4. ワークシートにピボットテーブルを追加
+    // For future implementation:
+    // 1. Get data
+    // 2. Create pivot table
+    // 3. Set rows, columns, values, and aggregation function
+    // 4. Add pivot table to worksheet
     
-    // ファイルを保存
+    // Save file
     await workbook.xlsx.writeFile(fullPath);
     
     return {
       content: [{
         type: 'text',
-        text: `ピボットテーブルが正常に作成されました（注: 現在の実装では実際にピボットテーブルは作成されません）\n` +
-              `- データ範囲: ${dataRange}\n` +
-              `- 行: ${rows.join(', ')}\n` +
-              `- 列: ${columns?.join(', ') || '(なし)'}\n` +
-              `- 値: ${values.join(', ')}\n` +
-              `- 集計関数: ${validAggFunc.func}`
+        text: `Pivot table created successfully (Note: The current implementation does not actually create a pivot table)\n` +
+              `- Data range: ${dataRange}\n` +
+              `- Rows: ${rows.join(', ')}\n` +
+              `- Columns: ${columns?.join(', ') || '(none)'}\n` +
+              `- Values: ${values.join(', ')}\n` +
+              `- Aggregation function: ${validAggFunc.func}`
       }]
     };
   } catch (error) {
@@ -66,15 +66,15 @@ export async function handleCreatePivotTable(args: CreatePivotTableArgs, workboo
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `ピボットテーブル作成エラー: ${error.message}` : 'ピボットテーブル作成中に不明なエラーが発生しました'
+      error instanceof Error ? `Pivot table creation error: ${error.message}` : 'Unknown error occurred while creating pivot table'
     );
   }
 }
 
 /**
- * 集計関数を検証
- * @param aggFunc - 集計関数
- * @returns 検証結果
+ * Validate aggregation function
+ * @param aggFunc - Aggregation function
+ * @returns Validation result
  */
 function validateAggFunc(aggFunc: string): { valid: boolean; func?: string; error?: string } {
   const validFuncs = [
@@ -83,19 +83,19 @@ function validateAggFunc(aggFunc: string): { valid: boolean; func?: string; erro
   
   const lowerFunc = aggFunc.toLowerCase();
   
-  // 完全一致
+  // Exact match
   if (validFuncs.includes(lowerFunc)) {
     return { valid: true, func: lowerFunc };
   }
   
-  // 部分一致
+  // Partial match
   for (const func of validFuncs) {
     if (lowerFunc.includes(func)) {
       return { valid: true, func };
     }
   }
   
-  // 特殊なマッピング
+  // Special mappings
   const funcMap: Record<string, string> = {
     'mean': 'average',
     'avg': 'average',
@@ -112,6 +112,6 @@ function validateAggFunc(aggFunc: string): { valid: boolean; func?: string; erro
   
   return { 
     valid: false, 
-    error: `集計関数 "${aggFunc}" は無効です。有効な関数: ${validFuncs.join(', ')}` 
+    error: `Aggregation function "${aggFunc}" is invalid. Valid functions: ${validFuncs.join(', ')}` 
   };
 }

@@ -1,5 +1,5 @@
 /**
- * 数式操作ハンドラー
+ * Formula operation handlers
  */
 
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
@@ -13,10 +13,10 @@ import { loadWorkbook, getExcelPath, getWorksheet } from '../utils/fileUtils.js'
 import { cellRefToCoordinate } from '../utils/cellUtils.js';
 
 /**
- * 数式を適用
- * @param args - 引数
- * @param workbookCache - ワークブックキャッシュ
- * @returns ツールレスポンス
+ * Apply formula to a cell
+ * @param args - Arguments
+ * @param workbookCache - Workbook cache
+ * @returns Tool response
  */
 export async function handleApplyFormula(args: ApplyFormulaArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
@@ -25,25 +25,25 @@ export async function handleApplyFormula(args: ApplyFormulaArgs, workbookCache: 
     const workbook = await loadWorkbook(fullPath, workbookCache);
     const worksheet = getWorksheet(workbook, sheetName);
     
-    // 数式を検証
+    // Validate formula
     const validationResult = validateFormula(formula);
     if (!validationResult.valid) {
-      throw new McpError(ErrorCode.InvalidParams, `数式エラー: ${validationResult.error}`);
+      throw new McpError(ErrorCode.InvalidParams, `Formula error: ${validationResult.error}`);
     }
     
-    // セル参照を座標に変換
+    // Convert cell reference to coordinates
     const { row, col } = cellRefToCoordinate(cell);
     
-    // 数式を適用
+    // Apply formula
     worksheet.getCell(row, col).value = { formula: formula.startsWith('=') ? formula.substring(1) : formula };
     
-    // ファイルを保存
+    // Save file
     await workbook.xlsx.writeFile(fullPath);
     
     return {
       content: [{
         type: 'text',
-        text: `数式 "${formula}" がセル ${cell} に正常に適用されました`
+        text: `Formula "${formula}" successfully applied to cell ${cell}`
       }]
     };
   } catch (error) {
@@ -52,16 +52,16 @@ export async function handleApplyFormula(args: ApplyFormulaArgs, workbookCache: 
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `数式適用エラー: ${error.message}` : '数式適用中に不明なエラーが発生しました'
+      error instanceof Error ? `Formula application error: ${error.message}` : 'Unknown error occurred while applying formula'
     );
   }
 }
 
 /**
- * 数式の構文を検証
- * @param args - 引数
- * @param workbookCache - ワークブックキャッシュ
- * @returns ツールレスポンス
+ * Validate formula syntax
+ * @param args - Arguments
+ * @param workbookCache - Workbook cache
+ * @returns Tool response
  */
 export async function handleValidateFormulaSyntax(args: ValidateFormulaSyntaxArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
@@ -70,21 +70,21 @@ export async function handleValidateFormulaSyntax(args: ValidateFormulaSyntaxArg
     const workbook = await loadWorkbook(fullPath, workbookCache);
     const worksheet = getWorksheet(workbook, sheetName);
     
-    // 数式を検証
+    // Validate formula
     const validationResult = validateFormula(formula);
     
     if (validationResult.valid) {
       return {
         content: [{
           type: 'text',
-          text: `数式 "${formula}" は有効です`
+          text: `Formula "${formula}" is valid`
         }]
       };
     } else {
       return {
         content: [{
           type: 'text',
-          text: `数式エラー: ${validationResult.error}`
+          text: `Formula error: ${validationResult.error}`
         }]
       };
     }
@@ -94,50 +94,50 @@ export async function handleValidateFormulaSyntax(args: ValidateFormulaSyntaxArg
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `数式検証エラー: ${error.message}` : '数式検証中に不明なエラーが発生しました'
+      error instanceof Error ? `Formula validation error: ${error.message}` : 'Unknown error occurred during formula validation'
     );
   }
 }
 
 /**
- * 数式を検証
- * @param formula - 検証する数式
- * @returns 検証結果
+ * Validate formula
+ * @param formula - Formula to validate
+ * @returns Validation result
  */
 function validateFormula(formula: string): { valid: boolean; error?: string } {
-  // 数式が空の場合
+  // Check if formula is empty
   if (!formula || formula.trim() === '') {
-    return { valid: false, error: '数式が空です' };
+    return { valid: false, error: 'Formula is empty' };
   }
   
-  // 数式から先頭の = を削除（あれば）
+  // Remove leading = from formula (if present)
   const formulaContent = formula.startsWith('=') ? formula.substring(1) : formula;
   
-  // 基本的な構文チェック
+  // Basic syntax check
   try {
-    // 括弧の対応をチェック
+    // Check parentheses matching
     const openParenCount = (formulaContent.match(/\(/g) || []).length;
     const closeParenCount = (formulaContent.match(/\)/g) || []).length;
     if (openParenCount !== closeParenCount) {
-      return { valid: false, error: '括弧の対応が取れていません' };
+      return { valid: false, error: 'Mismatched parentheses' };
     }
     
-    // 引用符の対応をチェック
+    // Check quotation marks matching
     const quoteCount = (formulaContent.match(/"/g) || []).length;
     if (quoteCount % 2 !== 0) {
-      return { valid: false, error: '引用符の対応が取れていません' };
+      return { valid: false, error: 'Mismatched quotation marks' };
     }
     
-    // 基本的な演算子の使用方法をチェック
+    // Check basic operator usage
     if (/[+\-*/]$/.test(formulaContent)) {
-      return { valid: false, error: '数式が演算子で終わっています' };
+      return { valid: false, error: 'Formula ends with an operator' };
     }
     
     if (/[+\-*/]{2,}/.test(formulaContent)) {
-      return { valid: false, error: '演算子が連続しています' };
+      return { valid: false, error: 'Consecutive operators' };
     }
     
-    // 関数名のチェック
+    // Check function names
     const functionMatches = formulaContent.match(/[A-Za-z0-9_]+\(/g);
     if (functionMatches) {
       const knownFunctions = [
@@ -155,21 +155,21 @@ function validateFormula(formula: string): { valid: boolean; error?: string } {
       for (const match of functionMatches) {
         const funcName = match.substring(0, match.length - 1).toUpperCase();
         if (!knownFunctions.includes(funcName)) {
-          // 未知の関数名の場合は警告を返すが、エラーとはしない
-          // ExcelJSは未知の関数も受け入れる可能性があるため
-          console.warn(`警告: 未知の関数名 "${funcName}" が使用されています`);
+          // Warn about unknown function names but don't treat as error
+          // ExcelJS might accept unknown functions
+          console.warn(`Warning: Unknown function name "${funcName}" is used`);
         }
       }
     }
     
-    // その他の基本的なチェック
-    // 実際の実装では、より詳細な構文チェックが必要
+    // Other basic checks
+    // In a real implementation, more detailed syntax checking would be needed
     
     return { valid: true };
   } catch (error) {
     return { 
       valid: false, 
-      error: error instanceof Error ? error.message : '不明な数式エラー' 
+      error: error instanceof Error ? error.message : 'Unknown formula error' 
     };
   }
 }

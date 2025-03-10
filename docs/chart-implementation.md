@@ -1,22 +1,22 @@
-# グラフ機能の実装提案
+# Chart Implementation Proposal
 
-## 現状
+## Current Status
 
-現在のExcel MCPサーバーのNode.js/TypeScript版では、グラフ機能が仮実装されています。これはExcelJSのグラフ機能が実験的で型定義が不完全なためです。現在の実装では、実際にグラフを作成せず、成功メッセージのみを返しています。
+In the current Excel MCP server's Node.js/TypeScript version, chart functionality is provisionally implemented. This is because ExcelJS's chart functionality is experimental and has incomplete type definitions. The current implementation does not actually create charts but only returns a success message.
 
-## 提案: xlsx-chartライブラリの使用
+## Proposal: Using xlsx-chart Library
 
-[objectum/xlsx-chart](https://github.com/objectum/xlsx-chart)ライブラリを使用することで、グラフ機能を実装できる可能性があります。このライブラリは、Node.jsでExcelチャートを作成するための機能を提供しています。
+The [objectum/xlsx-chart](https://github.com/objectum/xlsx-chart) library could be used to implement chart functionality. This library provides functionality for creating Excel charts in Node.js.
 
-### インストール方法
+### Installation
 
 ```bash
 npm install xlsx-chart --save
 ```
 
-### 実装例
+### Implementation Example
 
-以下は、xlsx-chartライブラリを使用したグラフ作成の実装例です。
+Below is an implementation example of chart creation using the xlsx-chart library.
 
 ```typescript
 import XLSXChart from 'xlsx-chart';
@@ -31,33 +31,33 @@ export async function handleCreateChart(args: CreateChartArgs): Promise<ToolResp
     const { filePath, sheetName, dataRange, chartType, targetCell, title, xAxis, yAxis } = args;
     const fullPath = getExcelPath(filePath);
     
-    // データを準備するためにExcelJSでファイルを読み込む
+    // Load file with ExcelJS to prepare data
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(fullPath);
     const worksheet = workbook.getWorksheet(sheetName);
     if (!worksheet) {
-      throw new McpError(ErrorCode.InvalidParams, `シート '${sheetName}' が見つかりません`);
+      throw new McpError(ErrorCode.InvalidParams, `Sheet '${sheetName}' not found`);
     }
     
-    // データ範囲を解析
+    // Parse data range
     const range = parseCellOrRange(dataRange);
     const { startRow, startCol, endRow, endCol } = range;
     
-    // タイトル（行ラベル）を取得
+    // Get titles (row labels)
     const titles: string[] = [];
     for (let row = startRow + 1; row <= endRow; row++) {
       const cell = worksheet.getCell(row, startCol);
       titles.push(cell.text || `Row ${row}`);
     }
     
-    // フィールド（列ラベル）を取得
+    // Get fields (column labels)
     const fields: string[] = [];
     for (let col = startCol + 1; col <= endCol; col++) {
       const cell = worksheet.getCell(startRow, col);
       fields.push(cell.text || `Column ${col}`);
     }
     
-    // データを構築
+    // Build data
     const data: Record<string, Record<string, number>> = {};
     for (let row = startRow + 1; row <= endRow; row++) {
       const rowTitle = titles[row - startRow - 1];
@@ -71,24 +71,24 @@ export async function handleCreateChart(args: CreateChartArgs): Promise<ToolResp
       }
     }
     
-    // グラフタイプを検証
+    // Validate chart type
     const validChartTypes = ['line', 'bar', 'column', 'area', 'radar', 'scatter', 'pie'];
     const lowerType = chartType.toLowerCase();
     let chartTypeToUse = lowerType;
     
     if (!validChartTypes.includes(lowerType)) {
-      // 部分一致を試みる
+      // Try partial match
       const matchedType = validChartTypes.find(type => lowerType.includes(type));
       if (!matchedType) {
         throw new McpError(
           ErrorCode.InvalidParams,
-          `グラフタイプ "${chartType}" は無効です。有効なタイプ: ${validChartTypes.join(', ')}`
+          `Chart type "${chartType}" is invalid. Valid types: ${validChartTypes.join(', ')}`
         );
       }
       chartTypeToUse = matchedType;
     }
     
-    // xlsx-chartを使用してグラフを作成
+    // Create chart using xlsx-chart
     const xlsxChart = new XLSXChart();
     const opts = {
       file: fullPath,
@@ -109,7 +109,7 @@ export async function handleCreateChart(args: CreateChartArgs): Promise<ToolResp
     return {
       content: [{
         type: 'text',
-        text: `${chartTypeToUse}グラフが正常に作成されました`
+        text: `${chartTypeToUse} chart created successfully`
       }]
     };
   } catch (error) {
@@ -118,30 +118,30 @@ export async function handleCreateChart(args: CreateChartArgs): Promise<ToolResp
     }
     throw new McpError(
       ErrorCode.InternalError,
-      error instanceof Error ? `グラフ作成エラー: ${error.message}` : 'グラフ作成中に不明なエラーが発生しました'
+      error instanceof Error ? `Chart creation error: ${error.message}` : 'Unknown error occurred while creating chart'
     );
   }
 }
 ```
 
-### 注意点
+### Notes
 
-1. xlsx-chartライブラリは、ExcelJSとは異なるアプローチでExcelチャートを作成します。そのため、既存のExcelJSのワークブックキャッシュ機能との統合には注意が必要です。
+1. The xlsx-chart library creates Excel charts using a different approach than ExcelJS. Care must be taken when integrating with the existing ExcelJS workbook cache functionality.
 
-2. xlsx-chartライブラリは、特定のデータ構造を要求します。そのため、ExcelJSで読み込んだデータを適切な形式に変換する必要があります。
+2. The xlsx-chart library requires a specific data structure. Therefore, data loaded with ExcelJS needs to be converted to the appropriate format.
 
-3. xlsx-chartライブラリは、グラフの位置を指定するための直接的な方法を提供していない可能性があります。そのため、targetCellパラメータの使用方法については、さらなる調査が必要です。
+3. The xlsx-chart library may not provide a direct method to specify chart position. Therefore, further investigation is needed on how to use the targetCell parameter.
 
-4. xlsx-chartライブラリは、TypeScriptの型定義を提供していない可能性があります。そのため、型定義ファイルを作成する必要があるかもしれません。
+4. The xlsx-chart library may not provide TypeScript type definitions. Therefore, it may be necessary to create type definition files.
 
-## 実装手順
+## Implementation Steps
 
-1. xlsx-chartライブラリをインストールする
+1. Install the xlsx-chart library
    ```bash
    npm install xlsx-chart --save
    ```
 
-2. 必要に応じて、xlsx-chartライブラリの型定義ファイルを作成する
+2. Create type definition file for xlsx-chart library if needed
    ```typescript
    // src/types/xlsx-chart.d.ts
    declare module 'xlsx-chart' {
@@ -165,17 +165,17 @@ export async function handleCreateChart(args: CreateChartArgs): Promise<ToolResp
    }
    ```
 
-3. chartHandlers.tsファイルを修正して、xlsx-chartライブラリを使用してグラフを作成する
+3. Modify chartHandlers.ts file to create charts using the xlsx-chart library
 
-4. テストを実施して、グラフ機能が正常に動作することを確認する
+4. Test to ensure chart functionality works correctly
 
-## 代替案
+## Alternatives
 
-1. ExcelJSのグラフ機能が将来的に改善される可能性があるため、ExcelJSの最新バージョンを定期的に確認する
+1. Regularly check for the latest version of ExcelJS as its chart functionality may improve in the future
 
-2. 他のExcelグラフ作成ライブラリを調査する
+2. Investigate other Excel chart creation libraries
    - [officegen](https://github.com/Ziv-Barber/officegen)
    - [excel4node](https://github.com/natergj/excel4node)
    - [node-xlsx](https://github.com/mgcrea/node-xlsx)
 
-3. Python版の実装を参考にして、独自のグラフ作成機能を実装する
+3. Implement custom chart creation functionality based on the Python version implementation
