@@ -88,6 +88,56 @@ class ExcelServer {
             },
             required: ['filePath']
           }
+        },
+        {
+          name: 'get_workbook_metadata',
+          description: 'Get metadata about workbook including sheets, ranges, etc.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePath: { type: 'string' },
+              includeRanges: { type: 'boolean', default: false }
+            },
+            required: ['filePath']
+          }
+        },
+        {
+          name: 'rename_worksheet',
+          description: 'Rename worksheet in workbook',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePath: { type: 'string' },
+              oldName: { type: 'string' },
+              newName: { type: 'string' }
+            },
+            required: ['filePath', 'oldName', 'newName']
+          }
+        },
+        {
+          name: 'delete_worksheet',
+          description: 'Delete worksheet from workbook',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePath: { type: 'string' },
+              sheetName: { type: 'string' }
+            },
+            required: ['filePath', 'sheetName']
+          }
+        },
+        {
+          name: 'copy_worksheet',
+          description: 'Copy worksheet within workbook',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePath: { type: 'string' },
+              sourceSheet: { type: 'string' },
+              targetSheet: { type: 'string' }
+            },
+            required: ['filePath', 'sourceSheet', 'targetSheet']
+          }
         }
       ]
     }));
@@ -107,6 +157,18 @@ class ExcelServer {
           case 'create_excel':
             const createExcelResult = await this.handleCreateExcel(request.params.arguments);
             return createExcelResult;
+          case 'get_workbook_metadata':
+            const getWorkbookMetadataResult = await this.handleGetWorkbookMetadata(request.params.arguments);
+            return getWorkbookMetadataResult;
+          case 'rename_worksheet':
+            const renameWorksheetResult = await this.handleRenameWorksheet(request.params.arguments);
+            return renameWorksheetResult;
+          case 'delete_worksheet':
+            const deleteWorksheetResult = await this.handleDeleteWorksheet(request.params.arguments);
+            return deleteWorksheetResult;
+          case 'copy_worksheet':
+            const copyWorksheetResult = await this.handleCopyWorksheet(request.params.arguments);
+            return copyWorksheetResult;
           default:
             throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${request.params.name}`);
         }
@@ -302,6 +364,199 @@ class ExcelServer {
       column = column * 26 + (letters.charCodeAt(i) - 64);
     }
     return column;
+  }
+
+  /**
+   * Gets metadata about a workbook including sheets, ranges, etc.
+   * @param args - Object containing:
+   *   - filePath: string - Path to the Excel file
+   *   - includeRanges?: boolean - Whether to include used ranges info (default: false)
+   * @returns Object with workbook metadata
+   */
+  private async handleGetWorkbookMetadata(args: any) {
+    const { filePath, includeRanges = false } = args;
+    const workbook = await this.loadWorkbook(filePath);
+    
+    const metadata: any = {
+      fileName: path.basename(filePath),
+      filePath: filePath,
+      sheets: []
+    };
+
+    // Get information about each worksheet
+    workbook.eachSheet((worksheet, sheetId) => {
+      const sheetInfo: any = {
+        name: worksheet.name,
+        id: sheetId,
+        rowCount: worksheet.rowCount,
+        columnCount: worksheet.columnCount,
+        hidden: worksheet.state === 'hidden' || worksheet.state === 'veryHidden'
+      };
+
+      // Include used range information if requested
+      if (includeRanges) {
+        // Get the used range by finding the last cell with content
+        let maxRow = 0;
+        let maxCol = 0;
+        
+        worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+          maxRow = Math.max(maxRow, rowNumber);
+          row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+            maxCol = Math.max(maxCol, colNumber);
+          });
+        });
+        
+        if (maxRow > 0 && maxCol > 0) {
+          sheetInfo.usedRange = {
+            startRow: 1,
+            startColumn: 1,
+            endRow: maxRow,
+            endColumn: maxCol
+          };
+        }
+      }
+
+      metadata.sheets.push(sheetInfo);
+    });
+
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify(metadata, null, 2)
+      }]
+    };
+  }
+
+  /**
+   * Renames a worksheet in a workbook
+   * @param args - Object containing:
+   *   - filePath: string - Path to the Excel file
+   *   - oldName: string - Current name of the worksheet
+   *   - newName: string - New name for the worksheet
+   * @returns Object with success message
+   */
+  private async handleRenameWorksheet(args: any) {
+    const { filePath, oldName, newName } = args;
+    const workbook = await this.loadWorkbook(filePath);
+    
+    const worksheet = workbook.getWorksheet(oldName);
+    if (!worksheet) {
+      throw new McpError(ErrorCode.InvalidParams, `Sheet ${oldName} not found`);
+    }
+
+    // Check if new name already exists
+    if (workbook.getWorksheet(newName)) {
+      throw new McpError(ErrorCode.InvalidParams, `Sheet ${newName} already exists`);
+    }
+
+    worksheet.name = newName;
+    await workbook.xlsx.writeFile(filePath);
+    
+    return {
+      content: [{
+        type: 'text',
+        text: `Worksheet renamed from ${oldName} to ${newName} successfully`
+      }]
+    };
+  }
+
+  /**
+   * Deletes a worksheet from a workbook
+   * @param args - Object containing:
+   *   - filePath: string - Path to the Excel file
+   *   - sheetName: string - Name of the worksheet to delete
+   * @returns Object with success message
+   */
+  private async handleDeleteWorksheet(args: any) {
+    const { filePath, sheetName } = args;
+    const workbook = await this.loadWorkbook(filePath);
+    
+    const worksheet = workbook.getWorksheet(sheetName);
+    if (!worksheet) {
+      throw new McpError(ErrorCode.InvalidParams, `Sheet ${sheetName} not found`);
+    }
+
+    // Ensure we're not deleting the only worksheet
+    if (workbook.worksheets.length === 1) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        'Cannot delete the only worksheet in the workbook'
+      );
+    }
+
+    workbook.removeWorksheet(worksheet.id);
+    await workbook.xlsx.writeFile(filePath);
+    
+    return {
+      content: [{
+        type: 'text',
+        text: `Worksheet ${sheetName} deleted successfully`
+      }]
+    };
+  }
+
+  /**
+   * Copies a worksheet within a workbook
+   * @param args - Object containing:
+   *   - filePath: string - Path to the Excel file
+   *   - sourceSheet: string - Name of the source worksheet
+   *   - targetSheet: string - Name for the new worksheet
+   * @returns Object with success message
+   */
+  private async handleCopyWorksheet(args: any) {
+    const { filePath, sourceSheet, targetSheet } = args;
+    const workbook = await this.loadWorkbook(filePath);
+    
+    const sourceWorksheet = workbook.getWorksheet(sourceSheet);
+    if (!sourceWorksheet) {
+      throw new McpError(ErrorCode.InvalidParams, `Source sheet ${sourceSheet} not found`);
+    }
+
+    // Check if target sheet name already exists
+    if (workbook.getWorksheet(targetSheet)) {
+      throw new McpError(ErrorCode.InvalidParams, `Target sheet ${targetSheet} already exists`);
+    }
+
+    // Create new worksheet
+    const targetWorksheet = workbook.addWorksheet(targetSheet);
+    
+    // Copy properties
+    targetWorksheet.properties = JSON.parse(JSON.stringify(sourceWorksheet.properties));
+    targetWorksheet.properties.tabColor = sourceWorksheet.properties.tabColor;
+    
+    // Copy column properties and widths
+    sourceWorksheet.columns.forEach((column, index) => {
+      if (column.width) {
+        targetWorksheet.getColumn(index + 1).width = column.width;
+      }
+    });
+    
+    // Copy row heights and values
+    sourceWorksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+      const targetRow = targetWorksheet.getRow(rowNumber);
+      targetRow.height = row.height;
+      
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        const targetCell = targetRow.getCell(colNumber);
+        targetCell.value = cell.value;
+        targetCell.style = JSON.parse(JSON.stringify(cell.style));
+        
+        // Note: ExcelJS doesn't provide a direct way to check if a cell is part of a merge group
+        // We'll skip the merge cell handling as it would require additional tracking
+        // In a production implementation, you might want to track merged ranges separately
+      });
+      
+      targetRow.commit();
+    });
+    
+    await workbook.xlsx.writeFile(filePath);
+    
+    return {
+      content: [{
+        type: 'text',
+        text: `Worksheet ${sourceSheet} copied to ${targetSheet} successfully`
+      }]
+    };
   }
 
   async run() {
