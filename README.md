@@ -343,8 +343,8 @@ npm run build
 - Due to limitations in the current version of ExcelJS, the pivot table functionality does not actually create pivot tables but only returns success messages
 
 ## Author
-Author: isoittech
-Forked from: virtuarian
+- Author: isoittech
+- Forked from: virtuarian
 
 ## License
 This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
