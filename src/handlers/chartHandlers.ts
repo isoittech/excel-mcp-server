@@ -1,9 +1,8 @@
 /**
  * グラフ操作ハンドラー
  *
- * 注: ExcelJSのグラフ機能は実験的で型定義が不完全なため、
- * 現在の実装では実際にグラフを作成せず、成功メッセージのみを返します。
- * 将来的にはExcelJSのグラフ機能が改善されるか、別のライブラリを使用することを検討してください。
+ * xlsx-chartライブラリを使用してグラフを作成します。
+ * このライブラリは、Node.jsでExcelチャートを作成するための機能を提供しています。
  */
 
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
@@ -15,6 +14,7 @@ import {
 import { loadWorkbook, getExcelPath, getWorksheet } from '../utils/fileUtils.js';
 import { cellRefToCoordinate, parseCellOrRange } from '../utils/cellUtils.js';
 import ExcelJS from 'exceljs';
+import XLSXChart from 'xlsx-chart';
 
 /**
  * グラフを作成
@@ -24,16 +24,14 @@ import ExcelJS from 'exceljs';
  */
 export async function handleCreateChart(args: CreateChartArgs, workbookCache: WorkbookCache): Promise<ToolResponse> {
   try {
-    const { filePath, sheetName, dataRange, chartType, targetCell, title } = args;
+    const { filePath, sheetName, dataRange, chartType, targetCell, title, xAxis, yAxis } = args;
     const fullPath = getExcelPath(filePath);
     const workbook = await loadWorkbook(fullPath, workbookCache);
     const worksheet = getWorksheet(workbook, sheetName);
     
     // データ範囲を解析
     const range = parseCellOrRange(dataRange);
-    
-    // ターゲットセルの座標を取得
-    const targetCoord = cellRefToCoordinate(targetCell);
+    const { startRow, startCol, endRow, endCol } = range;
     
     // グラフタイプを検証
     const validChartType = validateChartType(chartType);
@@ -41,22 +39,56 @@ export async function handleCreateChart(args: CreateChartArgs, workbookCache: Wo
       throw new McpError(ErrorCode.InvalidParams, validChartType.error || 'グラフタイプが無効です');
     }
     
-    // 注: 現在のExcelJSのバージョンではグラフ機能が限定的で型定義も不完全なため、
-    // 実際にはグラフを作成せず、成功メッセージのみを返します。
+    // タイトル（行ラベル）を取得
+    const titles: string[] = [];
+    for (let row = startRow + 1; row <= endRow; row++) {
+      const cell = worksheet.getCell(row, startCol);
+      titles.push(String(cell.value || `Row ${row}`));
+    }
     
-    // 将来的な実装のためのコメント:
-    // 1. データを取得
-    // 2. グラフオブジェクトを作成
-    // 3. ワークシートにグラフを追加
-    // 4. グラフの位置とサイズを設定
+    // フィールド（列ラベル）を取得
+    const fields: string[] = [];
+    for (let col = startCol + 1; col <= endCol; col++) {
+      const cell = worksheet.getCell(startRow, col);
+      fields.push(String(cell.value || `Column ${col}`));
+    }
     
-    // ファイルを保存
-    await workbook.xlsx.writeFile(fullPath);
+    // データを構築
+    const data: Record<string, Record<string, number>> = {};
+    for (let row = startRow + 1; row <= endRow; row++) {
+      const rowTitle = titles[row - startRow - 1];
+      data[rowTitle] = {};
+      
+      for (let col = startCol + 1; col <= endCol; col++) {
+        const fieldName = fields[col - startCol - 1];
+        const cell = worksheet.getCell(row, col);
+        const value = typeof cell.value === 'number' ? cell.value : 0;
+        data[rowTitle][fieldName] = value;
+      }
+    }
+    
+    // xlsx-chartを使用してグラフを作成
+    const xlsxChart = new XLSXChart();
+    const opts = {
+      file: fullPath,
+      chart: validChartType.type || 'column', // デフォルトはcolumn
+      titles: titles,
+      fields: fields,
+      data: data,
+      chartTitle: title || undefined
+    };
+    
+    await new Promise<void>((resolve, reject) => {
+      xlsxChart.writeFile(opts, (err: Error | null) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
     
     return {
       content: [{
         type: 'text',
-        text: `${validChartType.type}グラフが正常に作成されました（注: 現在の実装では実際にグラフは作成されません）`
+        text: `${validChartType.type}グラフが正常に作成されました`
       }]
     };
   } catch (error) {
