@@ -21,7 +21,7 @@
 ### 1. リポジトリのクローン
 
 ```bash
-git clone git@github.com:virtuarian/excel-server.git
+git clone git@github.com:isoittech/excel-server.git
 cd excel-server
 ```
 
