@@ -21,7 +21,7 @@ This server provides MCP tools for manipulating local EXCEL files.
 ### 1. Clone the Repository
 
 ```bash
-git clone git@github.com:virtuarian/excel-server.git
+git clone git@github.com:isoittech/excel-server.git
 cd excel-server
 ```
 
