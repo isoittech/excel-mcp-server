@@ -3,3 +3,4 @@ build/
 *.log
 .env*
 
+.roo/mcp.json
