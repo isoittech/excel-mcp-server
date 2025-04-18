@@ -1,4 +1,4 @@
-# EXCEL 操作 MCP サーバー
+# EXCEL操作用 MCP サーバー
 
 このサーバーはローカルの EXCEL ファイルを操作するための MCP ツールを提供します。
 
@@ -6,46 +6,50 @@
 
 1. [システム要件](#システム要件)
 2. [インストール](#インストール)
-3. [使用方法](#使用方法)
+3. [使い方](#使い方)
 4. [注意事項](#注意事項)
 
 ## システム要件
 
 - Node.js: 18.x 以上
 - npm: 9.x 以上
-- Excel ファイル形式: .xlsx
-- 対応 OS: Windows 10/11, macOS 12+, Linux (Ubuntu 20.04+)
+- Excelファイル形式: .xlsx
+- 対応OS: Windows 10/11, macOS 12+, Linux (Ubuntu 20.04+)
 
 ## インストール
 
 ### 1. リポジトリのクローン
 
 ```bash
-git clone git@github.com:isoittech/excel-server.git
-cd excel-server
+git clone git@github.com:isoittech/excel-mcp-server.git
+cd excel-mcp-server
 ```
 
-### 2. 依存関係のインストールとビルド
+### 2. MCPサーバーの設定
 
-```bash
-npm install
-npm run build
-```
+#### Cline/Roo Code から利用する場合
 
-### 3. MCP サーバーの設定
+1. MCP Servers を開く
+2. 「Edit MCP Settings」をクリック
+3. 下記の excel エントリを追加
 
-▼ Cline から使用する場合
-
-1. MCP サーバーを開く
-2. Edit MCP Settings をクリック
-3. 以下の excel エントリを追加:
+#### Docker を使う場合
 
 ```json
 {
   "mcpServers": {
     "excel": {
-      "command": "node",
-      "args": ["/cloned-path/build/index.js"],  // Github をクローンしたフォルダ
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/your/host/excel_files:/app/excel_files",
+        "-e",
+        "EXCEL_FILES_PATH=/app/excel_files",
+        "isoittech/excel-mcp-server"
+      ],
       "env": {},
       "disabled": false,
       "alwaysAllow": []
@@ -54,11 +58,9 @@ npm run build
 }
 ```
 
-※ または、json ファイルを手動で開いて編集することもできます
+## 使い方
 
-## 使用方法
-
-### EXCEL ファイルの読み込み
+### EXCELファイルの読み込み
 
 ```json
 {
@@ -72,7 +74,7 @@ npm run build
 }
 ```
 
-### EXCEL ファイルへの書き込み
+### EXCELファイルへの書き込み
 
 ```json
 {
@@ -89,7 +91,7 @@ npm run build
 }
 ```
 
-### 新規シートの作成
+### 新しいシートの作成
 
 ```json
 {
@@ -102,7 +104,7 @@ npm run build
 }
 ```
 
-### 新規 EXCEL ファイルの作成
+### 新しいEXCELファイルの作成
 
 ```json
 {
@@ -110,7 +112,7 @@ npm run build
   "tool_name": "create_excel",
   "arguments": {
     "filePath": "/path/to/new_file.xlsx",
-    "sheetName": "Sheet1"  // オプション、デフォルトは "Sheet1"
+    "sheetName": "Sheet1"  // 省略可、デフォルトは "Sheet1"
   }
 }
 ```
@@ -123,12 +125,12 @@ npm run build
   "tool_name": "get_workbook_metadata",
   "arguments": {
     "filePath": "/path/to/file.xlsx",
-    "includeRanges": false  // オプション、使用範囲情報を含めるかどうか
+    "includeRanges": false  // 省略可、範囲情報を含めるかどうか
   }
 }
 ```
 
-### ワークシート名の変更
+### シート名の変更
 
 ```json
 {
@@ -142,7 +144,7 @@ npm run build
 }
 ```
 
-### ワークシートの削除
+### シートの削除
 
 ```json
 {
@@ -155,7 +157,7 @@ npm run build
 }
 ```
 
-### ワークシートのコピー
+### シートのコピー
 
 ```json
 {
@@ -169,7 +171,7 @@ npm run build
 }
 ```
 
-### 数式の適用
+### セルへの数式適用
 
 ```json
 {
@@ -261,7 +263,7 @@ npm run build
     "sourceStart": "A1",
     "sourceEnd": "C3",
     "targetStart": "D1",
-    "targetSheet": "Sheet2"  // オプション、省略するとソースシートと同じ
+    "targetSheet": "Sheet2"  // 省略可、省略時は同じシート
   }
 }
 ```
@@ -282,7 +284,7 @@ npm run build
 }
 ```
 
-### Excel 範囲の検証
+### Excel範囲の検証
 
 ```json
 {
@@ -292,7 +294,7 @@ npm run build
     "filePath": "/path/to/file.xlsx",
     "sheetName": "Sheet1",
     "startCell": "A1",
-    "endCell": "C3"  // オプション
+    "endCell": "C3"  // 省略可
   }
 }
 ```
@@ -309,9 +311,9 @@ npm run build
     "dataRange": "A1:C10",
     "chartType": "column",  // "column", "line", "bar", "area", "scatter", "pie"
     "targetCell": "E1",
-    "title": "サンプルグラフ",  // オプション
-    "xAxis": "X軸ラベル",  // オプション
-    "yAxis": "Y軸ラベル"   // オプション
+    "title": "サンプルグラフ",  // 省略可
+    "xAxis": "X軸ラベル",      // 省略可
+    "yAxis": "Y軸ラベル"       // 省略可
   }
 }
 ```
@@ -328,7 +330,7 @@ npm run build
     "dataRange": "A1:D100",
     "rows": ["Category"],
     "values": ["Sales"],
-    "columns": ["Region"],  // オプション
+    "columns": ["Region"],  // 省略可
     "aggFunc": "sum"  // "sum", "count", "average", "max", "min" など
   }
 }
@@ -336,15 +338,18 @@ npm run build
 
 ## 注意事項
 
-- ファイルパスは絶対パスで指定する必要があります
-- シート名が指定されていない場合、最初のシートが対象となります
-- 範囲指定は "A1:C10" のような形式で行います
-- create_excel で既存のファイルパスを指定するとエラーになります
-- ピボットテーブル機能は現在の ExcelJS の制限により、実際にはピボットテーブルを作成せず、成功メッセージのみを返します
+- ファイルパスは絶対パスで指定すること
+- シート名を指定しない場合、最初のシートが対象になる
+- 範囲指定は "A1:C10" のような形式で記述する
+- create_excel で既存ファイルパスを指定するとエラーになる
+- 現在の ExcelJS の制限により、ピボットテーブル機能は実際にはピボットテーブルを作成せず、成功メッセージのみ返す
 
 ## 作者
+
 - 作者: isoittech
-- fork元: virtuarian
+- フォーク元: virtuarian
 
 ## ライセンス
-この MCP サーバーは MIT ライセンスの下で提供されています。これは、MIT ライセンスの条件に従って、ソフトウェアを自由に使用、変更、配布できることを意味します。詳細については、プロジェクトリポジトリの LICENSE ファイルを参照してください。
+
+この MCP サーバーは MIT ライセンスで提供されています。  
+自由に利用・改変・再配布できます。詳細はリポジトリ内の LICENSE ファイルを参照してください。
