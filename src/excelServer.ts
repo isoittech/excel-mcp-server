@@ -7,13 +7,9 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ErrorCode,
-  ListResourcesRequestSchema,
-  ListResourceTemplatesRequestSchema,
   ListToolsRequestSchema,
   McpError,
-  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import ExcelJS from 'exceljs';
 import { WorkbookCache } from './types/index.js';
 
 // Import handlers
@@ -39,7 +35,7 @@ export class ExcelServer {
   constructor() {
     this.server = new Server(
       {
-        name: 'excel-server',
+        name: 'excel-mcp-server',
         version: '0.1.0',
       },
       {
@@ -65,10 +61,23 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              range: { type: 'string' },
-              previewOnly: { type: 'boolean', default: false }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path, e.g. 'excel_files/sample-data.xlsx'."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet to read. If omitted, the first worksheet is used. Example: 'Sheet1'."
+              },
+              range: {
+                type: 'string',
+                description: "Cell range to read in A1 notation. Example: 'A1:D10'. If omitted, reads the entire worksheet."
+              },
+              previewOnly: {
+                type: 'boolean',
+                default: false,
+                description: "If true, returns only a preview (first few rows) of the data. If false, returns all data. Default: false."
+              }
             },
             required: ['filePath']
           }
@@ -79,11 +88,28 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              data: { type: 'array' },
-              startCell: { type: 'string', default: 'A1' },
-              writeHeaders: { type: 'boolean', default: true }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file to write. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet to write to. If omitted, the first worksheet is used."
+              },
+              data: {
+                type: 'array',
+                description: "Array of data to write. Each element should represent a row (as an array or object)."
+              },
+              startCell: {
+                type: 'string',
+                default: 'A1',
+                description: "Top-left cell where writing starts, in A1 notation. Example: 'B2'. Default: 'A1'."
+              },
+              writeHeaders: {
+                type: 'boolean',
+                default: true,
+                description: "If true, writes column headers as the first row. If false, writes data only. Default: true."
+              }
             },
             required: ['filePath', 'data']
           }
@@ -94,8 +120,14 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the new worksheet to create. Example: 'Summary'."
+              }
             },
             required: ['filePath', 'sheetName']
           }
@@ -106,8 +138,15 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string', default: 'Sheet1' }
+              filePath: {
+                type: 'string',
+                description: "Path for the new Excel file to create. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                default: 'Sheet1',
+                description: "Name of the first worksheet to create in the new file. Default: 'Sheet1'."
+              }
             },
             required: ['filePath']
           }
@@ -118,8 +157,15 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              includeRanges: { type: 'boolean', default: false }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              includeRanges: {
+                type: 'boolean',
+                default: false,
+                description: "If true, includes cell range information in the metadata. Default: false."
+              }
             },
             required: ['filePath']
           }
@@ -130,9 +176,18 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              oldName: { type: 'string' },
-              newName: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              oldName: {
+                type: 'string',
+                description: "Current name of the worksheet to rename. Example: 'Sheet1'."
+              },
+              newName: {
+                type: 'string',
+                description: "New name for the worksheet. Example: 'Summary'."
+              }
             },
             required: ['filePath', 'oldName', 'newName']
           }
@@ -143,8 +198,14 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet to delete. Example: 'Sheet2'."
+              }
             },
             required: ['filePath', 'sheetName']
           }
@@ -155,9 +216,18 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sourceSheet: { type: 'string' },
-              targetSheet: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sourceSheet: {
+                type: 'string',
+                description: "Name of the worksheet to copy. Example: 'Sheet1'."
+              },
+              targetSheet: {
+                type: 'string',
+                description: "Name for the new copied worksheet. Example: 'Sheet1_Copy'."
+              }
             },
             required: ['filePath', 'sourceSheet', 'targetSheet']
           }
@@ -168,10 +238,22 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              cell: { type: 'string' },
-              formula: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet. Example: 'Sheet1'."
+              },
+              cell: {
+                type: 'string',
+                description: "Cell address to apply the formula, in A1 notation. Example: 'C5'."
+              },
+              formula: {
+                type: 'string',
+                description: "Formula to apply to the cell. Example: '=SUM(A1:A10)'."
+              }
             },
             required: ['filePath', 'sheetName', 'cell', 'formula']
           }
@@ -182,10 +264,22 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              cell: { type: 'string' },
-              formula: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet. Example: 'Sheet1'."
+              },
+              cell: {
+                type: 'string',
+                description: "Cell address to validate the formula, in A1 notation. Example: 'B2'."
+              },
+              formula: {
+                type: 'string',
+                description: "Formula to validate. Example: '=AVERAGE(B2:B10)'."
+              }
             },
             required: ['filePath', 'sheetName', 'cell', 'formula']
           }
@@ -196,22 +290,70 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              startCell: { type: 'string' },
-              endCell: { type: 'string' },
-              bold: { type: 'boolean' },
-              italic: { type: 'boolean' },
-              underline: { type: 'boolean' },
-              fontSize: { type: 'number' },
-              fontColor: { type: 'string' },
-              bgColor: { type: 'string' },
-              borderStyle: { type: 'string' },
-              borderColor: { type: 'string' },
-              numberFormat: { type: 'string' },
-              alignment: { type: 'string' },
-              wrapText: { type: 'boolean' },
-              mergeCells: { type: 'boolean' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet. Example: 'Sheet1'."
+              },
+              startCell: {
+                type: 'string',
+                description: "Top-left cell of the range to format, in A1 notation. Example: 'A1'."
+              },
+              endCell: {
+                type: 'string',
+                description: "Bottom-right cell of the range to format, in A1 notation. Example: 'D10'."
+              },
+              bold: {
+                type: 'boolean',
+                description: "If true, applies bold formatting to the range."
+              },
+              italic: {
+                type: 'boolean',
+                description: "If true, applies italic formatting to the range."
+              },
+              underline: {
+                type: 'boolean',
+                description: "If true, applies underline formatting to the range."
+              },
+              fontSize: {
+                type: 'number',
+                description: "Font size to apply to the range. Example: 12."
+              },
+              fontColor: {
+                type: 'string',
+                description: "Font color in hex or named color. Example: '#FF0000' or 'red'."
+              },
+              bgColor: {
+                type: 'string',
+                description: "Background color in hex or named color. Example: '#FFFF00' or 'yellow'."
+              },
+              borderStyle: {
+                type: 'string',
+                description: "Border style to apply. Example: 'thin', 'medium', 'dashed'."
+              },
+              borderColor: {
+                type: 'string',
+                description: "Border color in hex or named color. Example: '#000000' or 'black'."
+              },
+              numberFormat: {
+                type: 'string',
+                description: "Number format string. Example: '0.00', 'yyyy-mm-dd'."
+              },
+              alignment: {
+                type: 'string',
+                description: "Text alignment. Example: 'left', 'center', 'right'."
+              },
+              wrapText: {
+                type: 'boolean',
+                description: "If true, enables text wrapping in the range."
+              },
+              mergeCells: {
+                type: 'boolean',
+                description: "If true, merges the specified cell range."
+              }
             },
             required: ['filePath', 'sheetName', 'startCell']
           }
@@ -222,10 +364,22 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              startCell: { type: 'string' },
-              endCell: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet. Example: 'Sheet1'."
+              },
+              startCell: {
+                type: 'string',
+                description: "Top-left cell of the range to merge, in A1 notation. Example: 'A1'."
+              },
+              endCell: {
+                type: 'string',
+                description: "Bottom-right cell of the range to merge, in A1 notation. Example: 'B2'."
+              }
             },
             required: ['filePath', 'sheetName', 'startCell', 'endCell']
           }
@@ -236,10 +390,22 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              startCell: { type: 'string' },
-              endCell: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet. Example: 'Sheet1'."
+              },
+              startCell: {
+                type: 'string',
+                description: "Top-left cell of the range to unmerge, in A1 notation. Example: 'A1'."
+              },
+              endCell: {
+                type: 'string',
+                description: "Bottom-right cell of the range to unmerge, in A1 notation. Example: 'B2'."
+              }
             },
             required: ['filePath', 'sheetName', 'startCell', 'endCell']
           }
@@ -250,12 +416,30 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              sourceStart: { type: 'string' },
-              sourceEnd: { type: 'string' },
-              targetStart: { type: 'string' },
-              targetSheet: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet to copy from. Example: 'Sheet1'."
+              },
+              sourceStart: {
+                type: 'string',
+                description: "Top-left cell of the source range, in A1 notation. Example: 'A1'."
+              },
+              sourceEnd: {
+                type: 'string',
+                description: "Bottom-right cell of the source range, in A1 notation. Example: 'C10'."
+              },
+              targetStart: {
+                type: 'string',
+                description: "Top-left cell of the target range, in A1 notation. Example: 'E1'."
+              },
+              targetSheet: {
+                type: 'string',
+                description: "Name of the worksheet to copy to. If omitted, uses the same sheet."
+              }
             },
             required: ['filePath', 'sheetName', 'sourceStart', 'sourceEnd', 'targetStart']
           }
@@ -266,11 +450,28 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              startCell: { type: 'string' },
-              endCell: { type: 'string' },
-              shiftDirection: { type: 'string', enum: ['up', 'left'], default: 'up' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet. Example: 'Sheet1'."
+              },
+              startCell: {
+                type: 'string',
+                description: "Top-left cell of the range to delete, in A1 notation. Example: 'A1'."
+              },
+              endCell: {
+                type: 'string',
+                description: "Bottom-right cell of the range to delete, in A1 notation. Example: 'B5'."
+              },
+              shiftDirection: {
+                type: 'string',
+                enum: ['up', 'left'],
+                default: 'up',
+                description: "Direction to shift remaining cells after deletion. 'up' shifts cells up, 'left' shifts cells left. Default: 'up'."
+              }
             },
             required: ['filePath', 'sheetName', 'startCell', 'endCell']
           }
@@ -281,10 +482,22 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              startCell: { type: 'string' },
-              endCell: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet. Example: 'Sheet1'."
+              },
+              startCell: {
+                type: 'string',
+                description: "Top-left cell of the range to validate, in A1 notation. Example: 'A1'."
+              },
+              endCell: {
+                type: 'string',
+                description: "Bottom-right cell of the range to validate, in A1 notation. Example: 'C10'."
+              }
             },
             required: ['filePath', 'sheetName', 'startCell']
           }
@@ -295,14 +508,38 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              dataRange: { type: 'string' },
-              chartType: { type: 'string' },
-              targetCell: { type: 'string' },
-              title: { type: 'string' },
-              xAxis: { type: 'string' },
-              yAxis: { type: 'string' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet to create the chart in. Example: 'Sheet1'."
+              },
+              dataRange: {
+                type: 'string',
+                description: "Cell range containing the data for the chart, in A1 notation. Example: 'A1:D10'."
+              },
+              chartType: {
+                type: 'string',
+                description: "Type of chart to create. Example: 'bar', 'line', 'pie'."
+              },
+              targetCell: {
+                type: 'string',
+                description: "Top-left cell where the chart will be placed, in A1 notation. Example: 'F5'."
+              },
+              title: {
+                type: 'string',
+                description: "Title of the chart. Optional."
+              },
+              xAxis: {
+                type: 'string',
+                description: "Label for the X axis. Optional."
+              },
+              yAxis: {
+                type: 'string',
+                description: "Label for the Y axis. Optional."
+              }
             },
             required: ['filePath', 'sheetName', 'dataRange', 'chartType', 'targetCell']
           }
@@ -313,13 +550,38 @@ export class ExcelServer {
           inputSchema: {
             type: 'object',
             properties: {
-              filePath: { type: 'string' },
-              sheetName: { type: 'string' },
-              dataRange: { type: 'string' },
-              rows: { type: 'array', items: { type: 'string' } },
-              values: { type: 'array', items: { type: 'string' } },
-              columns: { type: 'array', items: { type: 'string' } },
-              aggFunc: { type: 'string', default: 'sum' }
+              filePath: {
+                type: 'string',
+                description: "Path to the Excel file. Specify an absolute or workspace-relative path."
+              },
+              sheetName: {
+                type: 'string',
+                description: "Name of the worksheet to create the pivot table in. Example: 'Sheet1'."
+              },
+              dataRange: {
+                type: 'string',
+                description: "Cell range containing the source data for the pivot table, in A1 notation. Example: 'A1:F100'."
+              },
+              rows: {
+                type: 'array',
+                items: { type: 'string' },
+                description: "Array of field names to use as rows in the pivot table. Example: ['Region', 'Product']."
+              },
+              values: {
+                type: 'array',
+                items: { type: 'string' },
+                description: "Array of field names to aggregate as values. Example: ['Sales', 'Profit']."
+              },
+              columns: {
+                type: 'array',
+                items: { type: 'string' },
+                description: "Array of field names to use as columns in the pivot table. Optional."
+              },
+              aggFunc: {
+                type: 'string',
+                default: 'sum',
+                description: "Aggregation function to use for values. Example: 'sum', 'count', 'average'. Default: 'sum'."
+              }
             },
             required: ['filePath', 'sheetName', 'dataRange', 'rows', 'values']
           }
