@@ -21,31 +21,35 @@ This server provides MCP tools for manipulating local EXCEL files.
 ### 1. Clone the Repository
 
 ```bash
-git clone git@github.com:isoittech/excel-server.git
-cd excel-server
+git clone git@github.com:isoittech/excel-mcp-server.git
+cd excel-mcp-server
 ```
 
-### 2. Install Dependencies and Build
+### 2. Configure MCP Server
 
-```bash
-npm install
-npm run build
-```
-
-### 3. Configure MCP Server
-
-▼ When using from Cline
+▼ When using from Cline/Roo Code
 
 1. Open MCP Servers
 2. Click Edit MCP Settings
 3. Add the following excel entry:
 
+#### With Docker
+
 ```json
 {
   "mcpServers": {
     "excel": {
-      "command": "node",
-      "args": ["/cloned-path/build/index.js"],  // Folder where Github is cloned
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/your/host/excel_files:/app/excel_files",
+        "-e",
+        "EXCEL_FILES_PATH=/app/excel_files",
+        "isoittech/excel-mcp-server"
+      ],
       "env": {},
       "disabled": false,
       "alwaysAllow": []
@@ -53,8 +57,6 @@ npm run build
   }
 }
 ```
-
-※ Alternatively, manually open and edit the json file
 
 ## Usage
 
