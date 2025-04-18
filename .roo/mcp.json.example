@@ -1,0 +1,45 @@
+{
+  "mcpServers": {
+    "brave-search": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "BRAVE_API_KEY",
+        "mcp/brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": BRAVE_API_KEY
+      },
+      "alwaysAllow": []
+    },
+    "fetch": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/fetch"
+      ],
+      "alwaysAllow": []
+    },
+    "excel": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/mnt/c/01_Work/00_Common/mcp/excel-server/excel_files:/app/excel_files",
+        "-e",
+        "EXCEL_FILES_PATH=/app/excel_files",
+        "isoittech/excel-mcp-server"
+      ],
+      "env": {},
+      "disabled": false,
+      "alwaysAllow": []
+    }
+  }
+}
